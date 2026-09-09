@@ -1,0 +1,33 @@
+# StudyWave — 스터디에서 pip install -r requirements.txt
+# Python 3.11+ 권장
+
+# --- 오케스트레이션 / LLM (강의 day2–3) ---
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-google-genai>=2.0.0
+langchain-chroma>=0.1.0
+langchain-ollama>=0.2.0
+google-genai>=1.0.0
+
+# --- 스키마 / 환경 ---
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# --- B 파서 ---
+pypdf>=5.0.0
+pdfplumber>=0.11.0
+
+# --- 벡터 저장소 (합의: pgvector, 강의 대체: chroma) ---
+chromadb>=0.5.0
+psycopg[binary]>=3.2.0
+pgvector>=0.3.0
+
+# --- 임베딩 차원 맞춤용 (선택) ---
+numpy>=1.26.0
+
+# --- UI ---
+streamlit>=1.38.0
+
+# --- 가이드 PDF 재생성 (팀 문서용) ---
+reportlab>=4.2.0

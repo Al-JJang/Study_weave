@@ -1,0 +1,9 @@
+"""벡터 저장소. 기본은 pgvector, 강의 실습은 Chroma 슬롯."""
+
+from store.vector_store import (
+    initialize_vector_db,
+    retrieve_vector_documents,
+    upsert_chunks,
+)
+
+__all__ = ["initialize_vector_db", "retrieve_vector_documents", "upsert_chunks"]
