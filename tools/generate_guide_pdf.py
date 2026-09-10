@@ -248,7 +248,10 @@ def build() -> None:
         P("STUDYWAVE  ·  TEAM IMPLEMENTATION SPEC", "cover_kicker"),
         P("구현 가이드", "cover"),
         P("파일명을 기준으로 한 데이터 흐름 · 통합 방법 · 역할별 작업 순서", "cover_sub"),
-        P("PDF / 코드 입력  →  AgentState  →  복습노트 + 퀴즈 + Streamlit / Obsidian .md", "cover_sub"),
+        P(
+            "PDF / 코드 입력  →  AgentState  →  복습노트 + 퀴즈 + Streamlit / Obsidian .md",
+            "cover_sub",
+        ),
         Spacer(1, 8 * mm),
         table(
             ["구분", "담당", "핵심 폴더", "Graph Node"],
@@ -517,7 +520,7 @@ DATABASE_URL=postgresql://localhost:5432/studywave
         P(
             "day2 agentEx3/Ex4, day3 agentEx5 의 StateGraph, START, END, add_node, add_edge, compile, invoke. "
             "MessagesState 와 ToolNode(직원 조회)는 이 서비스 그래프에 넣지 않는다. "
-            "검증에 LLM을 쓸 때만 config.get_chat_model(role=\"verify\") 를 호출한다. 규칙은 LLM보다 먼저 돌린다.",
+            '검증에 LLM을 쓸 때만 config.get_chat_model(role="verify") 를 호출한다. 규칙은 LLM보다 먼저 돌린다.',
         ),
         PageBreak(),
         P("8. B 작업 가이드 — 파싱 / 전처리 / 검색", "h1"),
@@ -644,7 +647,7 @@ DATABASE_URL=postgresql://localhost:5432/studywave
                 "mocks/data.py 의 MOCK_RETRIEVED_CHUNKS 를 입력으로 삼아, LLM 없이 ConceptItem 을 손으로 하나 만들어 model_validate 가 통과하는지 본다. 스키마를 먼저 몸에 익힌다.",
                 "build_evidence_context: 각 Chunk 를 [chunk_id | pdf p.N 또는 code Lx-Ly] 헤더 + content 블록으로 이어 붙인다. 토큰이 커지면 상위 TOP_K 만 쓴다.",
                 "prompts.py 에 네 개의 지시문을 적는다. 공통 문장: 근거 블록에 없는 사실은 쓰지 말 것, 각 항목에 source_chunk_ids 를 넣을 것, JSON만 출력할 것.",
-                "config.get_chat_model(role=\"generate\") 로 Gemini 를 받는다. 강의의 ChatGoogleGenerativeAI 또는 interactions.create + response_format schema=AnalysisLLMOutput.model_json_schema() 중 팀에서 하나를 고른다.",
+                'config.get_chat_model(role="generate") 로 Gemini 를 받는다. 강의의 ChatGoogleGenerativeAI 또는 interactions.create + response_format schema=AnalysisLLMOutput.model_json_schema() 중 팀에서 하나를 고른다.',
                 "concept.py: PDF Chunk 가 있을 때만 호출. title + summary + source_chunk_ids.",
                 "code_flow.py: 코드 Chunk 가 있을 때만 호출. 실행 순서와 핵심 문법(예: 필터 연산자, where)을 설명한다.",
                 "cross_reference.py: route 가 both 일 때만. theory_chunk_ids 와 code_chunk_ids 를 함께 넣는다. 문장 예시는 “이 코드의 WHERE 는 교안 p.3 메타데이터 필터를 구현한다.”",
