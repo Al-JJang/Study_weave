@@ -15,7 +15,7 @@ A — 검증 에이전트 (팀장, 그래프 설계까지).
 
 from __future__ import annotations
 
-from schemas.errors import NodeError, VerificationReport
+from schemas.errors import NodeError
 from schemas.quiz import QuizItem
 from schemas.state import AgentState
 

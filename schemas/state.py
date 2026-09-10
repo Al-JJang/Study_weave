@@ -9,7 +9,7 @@ A 계약 — LangGraph AgentState.
 
 from __future__ import annotations
 
-from typing import Literal, Optional, TypedDict
+from typing import Literal, TypedDict
 
 from schemas.analysis import (
     CodeAnalysisItem,
@@ -44,9 +44,9 @@ class AgentState(TypedDict, total=False):
     cross_references: list[CrossReferenceItem]
     troubleshooting: list[TroubleshootingItem]
     quiz_items: list[QuizItem]
-    final_markdown: Optional[str]
+    final_markdown: str | None
     route: RouteType
     status: StatusType
     errors: list[NodeError]
     retry_count: int
-    verification: Optional[VerificationReport]
+    verification: VerificationReport | None
