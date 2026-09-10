@@ -12,7 +12,7 @@ PDF → page_number 1-based / 코드 → start_line, end_line 1-based
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -24,9 +24,9 @@ class FileInfo(BaseModel):
     filename: str
     source_type: SourceType
     path: str
-    title: Optional[str] = None
-    size_bytes: Optional[int] = None
-    code_line_count: Optional[int] = None
+    title: str | None = None
+    size_bytes: int | None = None
+    code_line_count: int | None = None
 
 
 class Chunk(BaseModel):
@@ -35,12 +35,12 @@ class Chunk(BaseModel):
     source_type: SourceType
     content: str
     chunk_index: int = Field(ge=0)
-    page_number: Optional[int] = Field(default=None, ge=1)
-    start_line: Optional[int] = Field(default=None, ge=1)
-    end_line: Optional[int] = Field(default=None, ge=1)
+    page_number: int | None = Field(default=None, ge=1)
+    start_line: int | None = Field(default=None, ge=1)
+    end_line: int | None = Field(default=None, ge=1)
 
 
 class RetrievedChunk(Chunk):
-    distance: Optional[float] = None
-    vector_rank: Optional[int] = None
+    distance: float | None = None
+    vector_rank: int | None = None
     retrieval_sources: list[str] = Field(default_factory=lambda: ["vector"])

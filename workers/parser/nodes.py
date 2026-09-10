@@ -12,7 +12,6 @@ retrieve_chunks_node → retrieved_chunks  (store/vector_store.py)
 
 from __future__ import annotations
 
-from schemas.files import Chunk, FileInfo, RetrievedChunk
 from schemas.state import AgentState
 
 

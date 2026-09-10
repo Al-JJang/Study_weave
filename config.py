@@ -68,6 +68,7 @@ ProviderName = Literal["gemini", "ollama"]
 #   OLLAMA_VERIFY_MODEL=llama3.2:3b
 # ---------------------------------------------------------------------------
 
+
 def _as_provider(name: str, default: str) -> ProviderName:
     value = os.getenv(name, default).strip().lower()
     if value not in ("gemini", "ollama"):
@@ -113,8 +114,7 @@ def require_gemini_key() -> str:
     """강의는 import 시점에 raise. 여기선 Mock Graph 가 키 없이 돌 수 있게 호출할 때만 검사."""
     if not GEMINI_API_KEY:
         raise RuntimeError(
-            "GEMINI_API_KEY 가 없습니다. "
-            "프로젝트 루트 .env 에 GEMINI_API_KEY=... 를 넣으세요."
+            "GEMINI_API_KEY 가 없습니다. 프로젝트 루트 .env 에 GEMINI_API_KEY=... 를 넣으세요."
         )
     return GEMINI_API_KEY
 
@@ -152,6 +152,4 @@ def get_embeddings():
         # client.models.embed_content(model=EMBEDDING_MODEL, ...,
         #     config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSION))
     """
-    raise NotImplementedError(
-        f"config.get_embeddings — EMBEDDING_PROVIDER={EMBEDDING_PROVIDER}"
-    )
+    raise NotImplementedError(f"config.get_embeddings — EMBEDDING_PROVIDER={EMBEDDING_PROVIDER}")

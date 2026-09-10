@@ -27,4 +27,29 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.16.6",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle 오류
+    "F",   # pyflakes (미사용 import/변수, 정의 안 된 이름 등)
+    "I",   # import 정렬
+    "UP",  # 오래된 문법을 최신 문법으로
+    "B",   # 흔한 버그 패턴 (bugbear)
+    "SIM", # 불필요하게 복잡한 코드 단순화 제안
+]
+ignore = [
+    "E501",  # 줄 길이는 ruff format이 처리 — 한글 주석 많아서 이중 경고 방지
+]
+
+[tool.ruff.format]
+quote-style = "double"
