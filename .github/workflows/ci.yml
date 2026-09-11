@@ -31,3 +31,44 @@ jobs:
 
       - name: Test
         run: uv run pytest
+
+  db-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: studywave
+          POSTGRES_PASSWORD: studywave
+          POSTGRES_DB: studywave
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U studywave -d studywave"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Init pgvector extension
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          PGPASSWORD=studywave psql -h localhost -U studywave -d studywave -f db/init.sql
+
+      - name: DB integration test
+        env:
+          DATABASE_URL: postgresql://studywave:studywave@localhost:5432/studywave
+        run: uv run pytest -m integration

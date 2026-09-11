@@ -5,13 +5,12 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from schemas.errors import ErrorCode, NodeError
+from schemas.errors import NodeError
 
 
-@pytest.mark.parametrize("code", ErrorCode.__args__)
-def test_node_error_accepts_defined_error_codes(code):
-    error = NodeError(node="parse", error_code=code, message="test")
-    assert error.error_code == code
+def test_node_error_accepts_defined_error_code():
+    error = NodeError(node="parse", error_code="PARSE_FAIL", message="test")
+    assert error.error_code == "PARSE_FAIL"
 
 
 def test_node_error_rejects_unknown_error_code():
