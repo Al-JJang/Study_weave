@@ -128,7 +128,7 @@ MOCK_TROUBLESHOOTING = [
     TroubleshootingItem(
         symptom="검색 결과에 다른 주차 자료가 섞인다",
         cause="벡터 검색에 request_id / document_id 필터가 없다",
-        fix="pgvector WHERE 또는 Chroma metadata filter 를 건다",
+        fix="pgvector WHERE 절에 request_id/document_id 필터를 건다",
         source_chunk_ids=[MOCK_PARSED_CHUNKS[1].chunk_id],
     ),
 ]
