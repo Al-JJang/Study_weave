@@ -1,4 +1,4 @@
-"""벡터 저장소. 기본은 pgvector, 강의 실습은 Chroma 슬롯."""
+"""벡터 저장소. PostgreSQL + pgvector 기반."""
 
 from store.vector_store import (
     initialize_vector_db,

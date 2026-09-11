@@ -5,10 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "chromadb>=0.5.0",
     "google-genai>=1.0.0",
     "langchain>=0.3.0",
-    "langchain-chroma>=0.1.0",
     "langchain-core>=0.3.0",
     "langchain-google-genai>=2.0.0",
     "langchain-ollama>=0.2.0",
@@ -33,6 +31,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "integration: 외부 서비스(Postgres 등)가 실제로 떠 있어야 하는 테스트. 기본 실행에서는 제외됨.",
+]
+addopts = "-m 'not integration'"
 
 [tool.ruff]
 target-version = "py311"

@@ -10,19 +10,18 @@
         os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
     day3/agentEx5.py
         GoogleGenerativeAIEmbeddings(model=, output_dimensionality=768)
-        load_dotenv, BASE_DIR, DATA_DIR, CHROMA_DIR, COLLECTION_NAME
+        load_dotenv, BASE_DIR, DATA_DIR, COLLECTION_NAME
 
 프로바이더 정책 (스터디 기본안):
     - 생성(C) / 임베딩(B) 기본값 = Gemini (교육장 Tier 3 키)
     - 검증(D) / 라우팅(A) 은 규칙 기반으로도 가능. 쿼터 아끼려면 OSS(Ollama)
     - 합의 벡터 DB = PostgreSQL + pgvector (store/vector_store.py)
-    - 강의 실습은 Chroma. VECTOR_BACKEND=chroma 로 바꾸면 같은 함수 시그니처로 연습 가능
     - 임베딩 모델을 바꾸면 collection/테이블을 새로 만들어야 한다 (차원 불일치)
 
 스터디에서 할 일:
     - 프로젝트 루트에 .env 만들고 GEMINI_API_KEY 넣기 (키 값을 코드에 하드코딩 금지)
     - LLM_PROVIDER / EMBEDDING_PROVIDER 를 gemini | ollama 로 전환 실험
-    - EMBEDDING_DIMENSION 과 Chroma 차원을 맞출지 팀 합의
+    - EMBEDDING_DIMENSION 과 pgvector 컬럼 차원을 맞출지 팀 합의
     - TOP_K / DISTANCE_THRESHOLD 초기값 확정 (체크리스트 Tier 2)
     - get_chat_model() / get_embeddings() 를 직접 구현 (아래는 슬롯만)
 """
@@ -39,13 +38,11 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-CHROMA_DIR = DATA_DIR / "studywave_chroma_db"
 COLLECTION_NAME = "studywave_chunks"
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://localhost:5432/studywave",
+    "postgresql://studywave:studywave@localhost:5432/studywave",
 )
-VECTOR_BACKEND = os.getenv("VECTOR_BACKEND", "pgvector")  # pgvector | chroma
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 

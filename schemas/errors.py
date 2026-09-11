@@ -8,12 +8,24 @@ A 계약 — Node 에러 / 검증 리포트.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+ErrorCode = Literal[
+    "PARSE_FAIL",  # PDF/코드 파싱 실패
+    "EMPTY_SECTION",  # 마크다운 섹션이 비었음
+    "CITATION_MISSING",  # source_chunk_ids 누락
+    "HALLUCINATED_CHUNK_ID",  # 존재하지 않는 chunk_id 인용
+    "LLM_TIMEOUT",  # llm api 요청 타임아웃
+    "LLM_PARSE_FAIL",  # structured output 파싱/검증 실패
+    "QUIZ_ANSWER_MISMATCH",  # answer가 options에 없음
+]
 
 
 class NodeError(BaseModel):
     node: str
-    error_code: str
+    error_code: ErrorCode
     message: str
     retryable: bool = False
 
