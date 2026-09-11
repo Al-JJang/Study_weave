@@ -43,7 +43,7 @@ CHROMA_DIR = DATA_DIR / "studywave_chroma_db"
 COLLECTION_NAME = "studywave_chunks"
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://localhost:5432/studywave",
+    "postgresql://studywave:studywave@localhost:5432/studywave",
 )
 VECTOR_BACKEND = os.getenv("VECTOR_BACKEND", "pgvector")  # pgvector | chroma
 
