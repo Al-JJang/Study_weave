@@ -1,0 +1,23 @@
+#!/bin/sh
+# .githooks/prepare-commit-msg
+#
+# 브랜치명의 Jira 이슈 키(WEAVE-31)를 커밋 메시지 앞에 자동 삽입.
+# 예: chore/WEAVE-31-pgvector-setup 브랜치에서 커밋하면 "[WEAVE-31] " 자동 접두
+
+COMMIT_MSG_FILE="$1" #커밋 메시지가 임시로 저장된 파일 경로
+COMMIT_SOURCE="$2" #메시지가 어디서 왔는지 나타내는 키워드
+
+# merge/squash 커밋은 건드리지 않음 (안 그러면 "Merge pull request #3..." 메시지가 깨짐)
+case "$COMMIT_SOURCE" in
+  (merge|squash) exit 0 ;;
+esac
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null) #브랜치 명
+KEY=$(echo "$BRANCH" | grep -oE 'WEAVE-[0-9]+') # 브랜치 이름에서 [WEAVE-숫자] 패턴 추출
+
+[ -z "$KEY" ] && exit 0 # key 길이 확인해서 0인경우 == 티켓 관련 브랜치가 아닌경우 종료
+
+
+if ! grep -q "\[$KEY\]" "$COMMIT_MSG_FILE"; then # 이미 메시지에 키가 이미 있으면 중복 삽입 방지 (amend 시 재실행돼도 안전)
+    sed -i "1s/^/[$KEY] /" "$COMMIT_MSG_FILE" # [WEAVE-XX] 자동 삽입
+fi
