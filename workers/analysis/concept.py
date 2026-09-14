@@ -6,5 +6,5 @@ from schemas.analysis import ConceptItem
 from schemas.files import RetrievedChunk
 
 
-def produce_concept_summary(chunks: list[RetrievedChunk]) -> list[ConceptItem]:
-    raise NotImplementedError("C: produce_concept_summary")
+def produce_concepts(chunks: list[RetrievedChunk]) -> list[ConceptItem]:
+    raise NotImplementedError("C: produce_concepts")

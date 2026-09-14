@@ -15,7 +15,9 @@ from schemas.analysis import (
     CodeAnalysisItem,
     ConceptItem,
     CrossReferenceItem,
-    TroubleshootingItem,
+    FlowDiagram,
+    PracticeNote,
+    ReferenceTable,
 )
 from schemas.errors import NodeError, VerificationReport
 from schemas.files import Chunk, FileInfo, RetrievedChunk
@@ -39,10 +41,12 @@ class AgentState(TypedDict, total=False):
     files: list[FileInfo]
     parsed_chunks: list[Chunk]
     retrieved_chunks: list[RetrievedChunk]
-    concept_summary: list[ConceptItem]
-    code_analysis: list[CodeAnalysisItem]
+    concepts: list[ConceptItem]
+    code_units: list[CodeAnalysisItem]
+    flows: list[FlowDiagram]
+    tables: list[ReferenceTable]
     cross_references: list[CrossReferenceItem]
-    troubleshooting: list[TroubleshootingItem]
+    practice_notes: list[PracticeNote]
     quiz_items: list[QuizItem]
     final_markdown: str | None
     route: RouteType

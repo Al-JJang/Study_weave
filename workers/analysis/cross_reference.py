@@ -1,4 +1,4 @@
-"""C — 이론 p.X ↔ 코드 줄 연결. 연동: prompts.py, schemas.analysis.CrossReferenceItem, nodes.py"""
+"""C — 개념↔코드 매칭/단독 항목 분류(ref_type: matched/code_only/concept_only). 연동: prompts.py, schemas.analysis.CrossReferenceItem, nodes.py"""
 
 from __future__ import annotations
 
