@@ -54,6 +54,16 @@ class CrossReferenceItem(BaseModel):
     explanation: str
     source_chunk_ids: list[str]
 
+    @model_validator(mode="after")
+    def validate_ref_type_matches_refs(self) -> CrossReferenceItem:
+        if self.ref_type == "matched" and (self.code_ref is None or self.concept_ref is None):
+            raise ValueError("ref_type='matched'이면 code_ref와 concept_ref가 모두 필요합니다.")
+        if self.ref_type == "code_only" and self.code_ref is None:
+            raise ValueError("ref_type='code_only'이면 code_ref가 필요합니다.")
+        if self.ref_type == "concept_only" and self.concept_ref is None:
+            raise ValueError("ref_type='concept_only'이면 concept_ref가 필요합니다.")
+        return self
+
 
 class PracticeNote(BaseModel):
     note_type: Literal["mistake", "tip", "checklist_item"]
