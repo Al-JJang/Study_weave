@@ -25,8 +25,8 @@ class QuizItem(BaseModel):
     Attributes:
         quiz_type: 퀴즈 유형. 객관식, 단답형 또는 True/False.
         question: 문제 내용.
-        options: 객관식 보기 목록. 단답형과 True/False는 빈 리스트 사용 가능.
-        answer: 정답 문자열. 객관식은 보기 문자열, True/False는 True 또는 False.
+        options: 객관식은 보기 목록, 단답형은 빈 리스트, True/False는 ["True", "False"]를 사용.
+        answer: 정답 문자열. 객관식은 보기 문자열, 단답형은 단답 정답 문자열, True/False는 True 또는 False.
         explanation: 정답에 대한 해설.
         source_chunk_ids: 문제 생성에 사용된 근거 Chunk ID 목록.
     """
@@ -37,12 +37,18 @@ class QuizItem(BaseModel):
 
     options: list[str] = Field(
         default_factory=list,
-        description=("mcq는 보기를 사용하고 short/true_false는 빈 리스트를 사용할 수 있습니다."),
+        description=(
+            "mcq는 보기 목록을 사용하고, "
+            "short는 빈 리스트, "
+            "true_false는 ['True', 'False']를 사용합니다."
+        ),
     )
 
     answer: str = Field(
         description=(
-            "mcq는 보기 문자열 그대로 사용하고, true_false는 True 또는 False를 사용합니다."
+            "mcq는 보기 문자열 그대로 사용하고, "
+            "short는 단답 정답 문자열을 사용하며, "
+            "true_false는 True 또는 False를 사용합니다."
         )
     )
 
@@ -79,10 +85,10 @@ class QuizItem(BaseModel):
 
     @model_validator(mode="after")
     def validate_quiz_by_type(self) -> QuizItem:
-        """퀴즈 유형별 보기와 정답 규칙을 검사합니다.
+        """퀴즈 유형별 보기와 정답 규칙을 검사하고 정규화합니다.
 
         Returns:
-            유형별 검증을 통과한 QuizItem.
+            유형별 검증 및 정규화를 통과한 QuizItem.
 
         Raises:
             ValueError: 객관식 보기가 없거나 정답이 보기에 없는 경우,
@@ -93,14 +99,29 @@ class QuizItem(BaseModel):
             if not self.options:
                 raise ValueError("객관식 문제는 보기가 필요합니다.")
 
-            normalized_options = [opt.strip() for opt in self.options]
-            if self.answer.strip() not in normalized_options:
+            self.options = [option.strip() for option in self.options]
+
+            normalized_answer = self.answer.strip()
+
+            if normalized_answer not in self.options:
                 raise ValueError("객관식 정답은 보기 중 하나와 정확히 일치해야 합니다.")
 
-        if self.quiz_type == "true_false" and self.answer.strip().capitalize() not in [
-            "True",
-            "False",
-        ]:
-            raise ValueError("true_false 문제의 정답은 True 또는 False여야 합니다.")
+            self.answer = normalized_answer
+
+        elif self.quiz_type == "true_false":
+            normalized_answer = self.answer.strip().lower()
+
+            if normalized_answer not in [
+                "true",
+                "false",
+            ]:
+                raise ValueError("true_false 문제의 정답은 True 또는 False여야 합니다.")
+
+            self.answer = normalized_answer.capitalize()
+
+            self.options = [
+                "True",
+                "False",
+            ]
 
         return self
