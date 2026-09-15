@@ -12,7 +12,9 @@ workers/formatter/quiz.py 검증 테스트.
 8. 객관식과 단답형이 모두 포함된 결과를 허용
 9. 객관식만 또는 단답형만 있는 결과를 거부
 10. true_false는 선택적으로 추가할 수 있음
-11. Gemini Structured Output 결과가 list[QuizItem]으로 반환되는지 확인
+11. true_false 문항이 ["True", "False"] 선택지를 사용하는지 확인
+12. Gemini Structured Output 결과가 list[QuizItem]으로 반환되는지 확인
+13. 허용되지 않은 source_chunk_id가 포함된 퀴즈를 거부
 """
 
 from unittest.mock import MagicMock
@@ -251,7 +253,8 @@ def test_build_quiz_prompt_contains_evidence_and_rules() -> None:
 
     assert "true_false 유형은 필요한 경우" in prompt
     assert "선택적으로 추가할 수 있습니다" in prompt
-    assert 'true_false의 answer는 "True" 또는 "False"' in prompt
+    assert 'answer는 "True" 또는 "False"' in prompt
+    assert 'options는 반드시 ["True", "False"]' in prompt
     assert "source_chunk_ids" in prompt
 
 
@@ -411,6 +414,13 @@ def test_quiz_llm_output_accepts_optional_true_false() -> None:
         "short",
         "true_false",
     }
+
+    true_false_item = next(item for item in result.quiz_items if item.quiz_type == "true_false")
+
+    assert true_false_item.options == [
+        "True",
+        "False",
+    ]
 
 
 def test_produce_quiz_items_returns_structured_quiz(

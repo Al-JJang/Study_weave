@@ -205,10 +205,9 @@ def _build_quiz_prompt(
 2. 객관식(mcq)과 단답형(short)은
    반드시 모두 포함하세요.
 
-3. true_false 유형은 필요한 경우
-   선택적으로 추가할 수 있습니다.
-   true_false의 answer는 "True" 또는 "False"로 작성하세요.
-   options는 필요하지 않으며, 사용할 경우 ["True", "False"]로 작성하세요.
+3. true_false 유형은 필요한 경우 선택적으로 추가할 수 있습니다.
+   - answer는 "True" 또는 "False"를 사용합니다.
+   - options는 반드시 ["True", "False"]를 사용합니다.
 
 4. 객관식 문제에는 options를 작성하세요.
 
