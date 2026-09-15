@@ -93,10 +93,11 @@ class QuizItem(BaseModel):
             if not self.options:
                 raise ValueError("객관식 문제는 보기가 필요합니다.")
 
-            if self.answer not in self.options:
+            normalized_options = [opt.strip() for opt in self.options]
+            if self.answer.strip() not in normalized_options:
                 raise ValueError("객관식 정답은 보기 중 하나와 정확히 일치해야 합니다.")
 
-        if self.quiz_type == "true_false" and self.answer not in [
+        if self.quiz_type == "true_false" and self.answer.strip().capitalize() not in [
             "True",
             "False",
         ]:
