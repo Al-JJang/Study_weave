@@ -20,7 +20,7 @@ class ConceptItem(BaseModel):
     formula: str | None = None  # LaTeX 또는 읽을 수 있는 일반식. content_type="formula" 청크 근거
     needs_verification: bool = False  # 근거 청크에 extraction_method="vision"이 섞여 있으면 True
     related_code_refs: list[str] = Field(default_factory=list)
-    source_chunk_ids: list[str]
+    source_chunk_ids: list[str] = Field(min_length=1)
 
 
 class CodeAnalysisItem(BaseModel):
