@@ -17,16 +17,18 @@ from langgraph.graph import END, START, StateGraph
 
 from graph.router import route_input_node
 from mocks.data import (
-    MOCK_CODE_ANALYSIS,
-    MOCK_CONCEPT_SUMMARY,
+    MOCK_CODE_UNITS,
+    MOCK_CONCEPTS,
     MOCK_CROSS_REFERENCES,
     MOCK_FILES,
+    MOCK_FLOWS,
     MOCK_MARKDOWN,
     MOCK_PARSED_CHUNKS,
+    MOCK_PRACTICE_NOTES,
     MOCK_QUIZ_ITEMS,
     MOCK_REQUEST_ID,
     MOCK_RETRIEVED_CHUNKS,
-    MOCK_TROUBLESHOOTING,
+    MOCK_TABLES,
 )
 from schemas.errors import VerificationReport
 from schemas.files import FileInfo
@@ -47,18 +49,22 @@ def mock_analyze_node(state: AgentState) -> dict:
     route = state.get("route", "both")
     payload: dict = {
         "status": "analyzed",
-        "concept_summary": [],
-        "code_analysis": [],
+        "concepts": [],
+        "code_units": [],
+        "flows": [],
+        "tables": [],
         "cross_references": [],
-        "troubleshooting": [],
+        "practice_notes": [],
     }
     if route in ("pdf_only", "both"):
-        payload["concept_summary"] = MOCK_CONCEPT_SUMMARY
+        payload["concepts"] = MOCK_CONCEPTS
+        payload["flows"] = MOCK_FLOWS
+        payload["tables"] = MOCK_TABLES
     if route in ("code_only", "both"):
-        payload["code_analysis"] = MOCK_CODE_ANALYSIS
+        payload["code_units"] = MOCK_CODE_UNITS
     if route == "both":
         payload["cross_references"] = MOCK_CROSS_REFERENCES
-        payload["troubleshooting"] = MOCK_TROUBLESHOOTING
+        payload["practice_notes"] = MOCK_PRACTICE_NOTES
     return payload
 
 
@@ -119,10 +125,12 @@ def run_pipeline(files: list[FileInfo] | None = None, *, use_mock: bool = USE_MO
         "files": files or MOCK_FILES,
         "parsed_chunks": [],
         "retrieved_chunks": [],
-        "concept_summary": [],
-        "code_analysis": [],
+        "concepts": [],
+        "code_units": [],
+        "flows": [],
+        "tables": [],
         "cross_references": [],
-        "troubleshooting": [],
+        "practice_notes": [],
         "quiz_items": [],
         "final_markdown": None,
         "errors": [],

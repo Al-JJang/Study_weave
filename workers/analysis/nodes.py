@@ -2,11 +2,14 @@
 C — Graph Node (analyze).
 
 route 별:
-    pdf_only  → concept_summary
-    code_only → code_analysis
-    both      → 전부 + cross_references + troubleshooting
+    pdf_only  → concepts (+ flows/tables 선택)
+    code_only → code_units (+ flows/tables 선택)
+    both      → 전부 + cross_references + practice_notes
 
-연동: concept/code_flow/cross_reference/troubleshooting, graph/supervisor.py, config.get_chat_model
+반환 키(AnalysisOutput 필드와 동일): concepts, code_units, flows, tables, cross_references, practice_notes
+※ AgentState 쪽 키 이름은 A 승인 후 확정 — 팀 공유 문서(docs/schema-migration-analysis.md) 참고.
+
+연동: concept/code_flow/flow_diagrams/reference_tables/cross_reference/practice_notes, graph/supervisor.py, config.get_chat_model
 """
 
 from __future__ import annotations

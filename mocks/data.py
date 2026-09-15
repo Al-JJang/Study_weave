@@ -10,7 +10,9 @@ from schemas.analysis import (
     CodeAnalysisItem,
     ConceptItem,
     CrossReferenceItem,
-    TroubleshootingItem,
+    FlowDiagram,
+    PracticeNote,
+    ReferenceTable,
 )
 from schemas.files import Chunk, FileInfo, RetrievedChunk
 from schemas.quiz import QuizItem
@@ -94,41 +96,70 @@ MOCK_RETRIEVED_CHUNKS = [
     ),
 ]
 
-MOCK_CONCEPT_SUMMARY = [
+MOCK_CONCEPTS = [
     ConceptItem(
+        concept_id="concept-001",
         title="StateGraph 실행 모델",
         summary=(
             "Node 를 등록하고 Edge 로 순서를 정한 뒤 compile 하면 "
             "START → Node → END 로 State 가 흐른다."
         ),
+        related_code_refs=["code-001"],
         source_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id],
     ),
 ]
 
-MOCK_CODE_ANALYSIS = [
+MOCK_CODE_UNITS = [
     CodeAnalysisItem(
-        title="StateGraph 뼈대 코드",
-        explanation=(
+        unit_name="code-001",
+        unit_type="file",
+        execution_flow=(
             "add_node 로 parse 를 붙이고 START 에서 route 로 보낸 뒤 compile 한다. "
             "실제 분기 조건은 add_conditional_edges 에서 구현한다."
         ),
+        key_points=["add_node", "add_edge", "compile"],
         source_chunk_ids=[MOCK_PARSED_CHUNKS[2].chunk_id],
+    ),
+]
+
+MOCK_FLOWS = [
+    FlowDiagram(
+        scope="pipeline",
+        title="StudyWave 파이프라인 흐름",
+        diagram="route → parse → retrieve → analyze → format → verify",
+        description="AgentState 가 6개 Node 를 순서대로 통과하며 채워진다.",
+        source_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id],
+    ),
+]
+
+MOCK_TABLES = [
+    ReferenceTable(
+        title="Node 별 반환 key",
+        columns=["Node", "반환 key"],
+        rows=[
+            ["parse", "files, parsed_chunks"],
+            ["retrieve", "retrieved_chunks"],
+        ],
+        source_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id],
     ),
 ]
 
 MOCK_CROSS_REFERENCES = [
     CrossReferenceItem(
-        theory_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id],
-        code_chunk_ids=[MOCK_PARSED_CHUNKS[2].chunk_id],
+        ref_type="matched",
+        code_ref="code-001",
+        concept_ref="concept-001",
         explanation="교안 p.1 의 StateGraph 설명을 graph_demo.py 10-14행이 그대로 구현한다.",
+        source_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id, MOCK_PARSED_CHUNKS[2].chunk_id],
     ),
 ]
 
-MOCK_TROUBLESHOOTING = [
-    TroubleshootingItem(
-        symptom="검색 결과에 다른 주차 자료가 섞인다",
-        cause="벡터 검색에 request_id / document_id 필터가 없다",
-        fix="pgvector WHERE 절에 request_id/document_id 필터를 건다",
+MOCK_PRACTICE_NOTES = [
+    PracticeNote(
+        note_type="mistake",
+        scope="learner_pattern",
+        content="검색 결과에 다른 주차 자료가 섞인다",
+        caution="pgvector WHERE 절에 request_id/document_id 필터를 걸지 않으면 발생한다.",
         source_chunk_ids=[MOCK_PARSED_CHUNKS[1].chunk_id],
     ),
 ]

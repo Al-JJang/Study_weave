@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 from mocks.data import (
-    MOCK_CODE_ANALYSIS,
-    MOCK_CONCEPT_SUMMARY,
+    MOCK_CODE_UNITS,
+    MOCK_CONCEPTS,
     MOCK_CROSS_REFERENCES,
     MOCK_FILES,
+    MOCK_FLOWS,
     MOCK_PARSED_CHUNKS,
+    MOCK_PRACTICE_NOTES,
     MOCK_QUIZ_ITEMS,
     MOCK_RETRIEVED_CHUNKS,
-    MOCK_TROUBLESHOOTING,
+    MOCK_TABLES,
 )
 
 
@@ -18,10 +20,12 @@ def test_mock_collections_are_not_empty():
     assert MOCK_FILES
     assert MOCK_PARSED_CHUNKS
     assert MOCK_RETRIEVED_CHUNKS
-    assert MOCK_CONCEPT_SUMMARY
-    assert MOCK_CODE_ANALYSIS
+    assert MOCK_CONCEPTS
+    assert MOCK_CODE_UNITS
+    assert MOCK_FLOWS
+    assert MOCK_TABLES
     assert MOCK_CROSS_REFERENCES
-    assert MOCK_TROUBLESHOOTING
+    assert MOCK_PRACTICE_NOTES
     assert MOCK_QUIZ_ITEMS
 
 
