@@ -28,7 +28,7 @@ class CodeAnalysisItem(BaseModel):
     unit_type: Literal["function", "file", "layer"]
     execution_flow: str
     key_points: list[str] = Field(default_factory=list)
-    source_chunk_ids: list[str]
+    source_chunk_ids: list[str] = Field(min_length=1)
 
 
 class FlowDiagram(BaseModel):
