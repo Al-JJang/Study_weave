@@ -122,7 +122,7 @@ def _make_sample_state() -> dict:
             {
                 "ref_type": "matched",
                 "code_ref": "router_node",
-                "concept_ref": "LangGraph Router",
+                "concept_ref": "concept-langgraph",
                 "explanation": ("Router 개념이 router_node 함수로 구현됩니다."),
                 "source_chunk_ids": [
                     "chunk-001",
