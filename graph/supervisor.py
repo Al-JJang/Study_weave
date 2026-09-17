@@ -3,7 +3,7 @@ A — LangGraph Supervisor.
 
 흐름:
     START → route → parse → retrieve → analyze → format → verify → END
-    retryable 이면 verify → analyze 또는 parse  (add_conditional_edges, 스터디에서)
+    retryable 이면 verify → analyze (add_conditional_edges)
 
 연동:
     graph/router.py, graph/verify.py
@@ -13,8 +13,11 @@ A — LangGraph Supervisor.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from langgraph.graph import END, START, StateGraph
 
+import config
 from graph.router import route_input_node
 from mocks.data import (
     MOCK_CODE_UNITS,
@@ -81,6 +84,30 @@ def mock_verify_node(state: AgentState) -> dict:
     return {"verification": report, "status": "completed"}
 
 
+def route_after_verify(state: AgentState) -> Literal["analyze", "__end__"]:
+    """verify 이후 재시도할지 끝낼지 결정한다.
+
+    NodeError.retryable 은 생성 시점의 retry_count 로 고정되는 값이라 여러 번
+    실패하며 errors 에 누적되면 stale 한 True 가 섞여 남는다. 그래서 개별
+    에러가 아니라 최신 status/retry_count/policy 를 직접 본다.
+
+    Args:
+        state: verify_node 가 갱신한 AgentState. status, retry_count 를
+            참조합니다.
+
+    Returns:
+        검증 실패 + retry 정책 + retry_count 가 한도 이내면 "analyze",
+        아니면 "__end__".
+    """
+    if state.get("status") != "failed":
+        return "__end__"
+    if config.NODE_FAILURE_POLICY != "retry":
+        return "__end__"
+    if state.get("retry_count", 0) > config.MAX_RETRY_COUNT:
+        return "__end__"
+    return "analyze"
+
+
 def build_graph(*, use_mock: bool = USE_MOCK):
     if use_mock:
         parse_node = mock_parse_node
@@ -114,7 +141,9 @@ def build_graph(*, use_mock: bool = USE_MOCK):
     builder.add_edge("retrieve", "analyze")
     builder.add_edge("analyze", "format")
     builder.add_edge("format", "verify")
-    builder.add_edge("verify", END)
+    builder.add_conditional_edges(
+        "verify", route_after_verify, {"analyze": "analyze", "__end__": END}
+    )
     return builder.compile()
 
 
