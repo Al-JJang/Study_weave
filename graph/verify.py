@@ -1,5 +1,5 @@
 """
-A — 검증 에이전트 (팀장, 그래프 설계까지).
+A — 검증 에이전트 (팀장, 그래프 설계까지)
 
 검사 초안:
     1. source_chunk_ids 가 parsed/retrieved chunk 에 존재
