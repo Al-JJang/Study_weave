@@ -1,12 +1,12 @@
 """
-D — Obsidian/Notion 호환 마크다운 포맷터.
+D — Markdown 본문 포맷터.
 
 목차:
-    YAML → 개념 정리 → 코드 분석 → 흐름도 → 참조표
+    개념 정리 → 코드 분석 → 흐름도 → 참조표
     → 이론-코드 연결 → Practice Notes → Quiz
 
-토글/콜아웃:
-    <details>, > [!NOTE]
+토글:
+    Quiz 정답 및 해설은 <details> 태그 사용
 
 빈 섹션:
     config.EMPTY_SECTION_POLICY
@@ -28,7 +28,7 @@ from schemas.state import AgentState
 def _format_source_chunk_ids(
     source_chunk_ids: list[str],
 ) -> str:
-    """근거 Chunk ID 목록을 Markdown NOTE callout으로 변환합니다.
+    """근거 Chunk ID 목록을 일반 Markdown 문자열로 변환합니다.
 
     Args:
         source_chunk_ids: 항목의 근거 Chunk ID 목록.
@@ -42,7 +42,7 @@ def _format_source_chunk_ids(
 
     joined_ids = ", ".join(source_chunk_ids)
 
-    return f"> [!NOTE] 근거 Chunk\n> {joined_ids}"
+    return f"**근거 Chunk:** {joined_ids}"
 
 
 def _append_section(
@@ -78,34 +78,6 @@ def _append_section(
                 ]
             )
         )
-
-
-def _format_yaml(state: AgentState) -> str:
-    """AgentState의 기본 메타데이터를 YAML Front Matter로 변환합니다.
-
-    Args:
-        state: request_id와 route 등의 메타데이터가 포함된 AgentState.
-
-    Returns:
-        Markdown 상단에 사용할 YAML Front Matter 문자열.
-    """
-
-    lines = [
-        "---",
-    ]
-
-    request_id = state.get("request_id")
-    route = state.get("route")
-
-    if request_id:
-        lines.append(f'request_id: "{request_id}"')
-
-    if route:
-        lines.append(f'route: "{route}"')
-
-    lines.append("---")
-
-    return "\n".join(lines)
 
 
 def _format_concepts(
@@ -151,18 +123,17 @@ def _format_concepts(
             lines.extend(
                 [
                     "",
-                    "> [!NOTE] 확인 필요",
-                    "> 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    "**확인 필요:** 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
                 ]
             )
 
-        source_note = _format_source_chunk_ids(concept.source_chunk_ids)
+        source_info = _format_source_chunk_ids(concept.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -201,13 +172,13 @@ def _format_code_units(
                 ]
             )
 
-        source_note = _format_source_chunk_ids(unit.source_chunk_ids)
+        source_info = _format_source_chunk_ids(unit.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -246,18 +217,17 @@ def _format_flows(
             lines.extend(
                 [
                     "",
-                    "> [!NOTE] 확인 필요",
-                    "> 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    "**확인 필요:** 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
                 ]
             )
 
-        source_note = _format_source_chunk_ids(flow.source_chunk_ids)
+        source_info = _format_source_chunk_ids(flow.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -320,13 +290,13 @@ def _format_tables(
 
                 lines.append("| " + " | ".join(row_values) + " |")
 
-        source_note = _format_source_chunk_ids(table.source_chunk_ids)
+        source_info = _format_source_chunk_ids(table.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -380,13 +350,13 @@ def _format_cross_references(
             ]
         )
 
-        source_note = _format_source_chunk_ids(reference.source_chunk_ids)
+        source_info = _format_source_chunk_ids(reference.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -424,18 +394,17 @@ def _format_practice_notes(
             lines.extend(
                 [
                     "",
-                    "> [!NOTE] 주의",
-                    f"> {note.caution}",
+                    f"**주의:** {note.caution}",
                 ]
             )
 
-        source_note = _format_source_chunk_ids(note.source_chunk_ids)
+        source_info = _format_source_chunk_ids(note.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -502,13 +471,13 @@ def _format_quiz_items(
             ]
         )
 
-        source_note = _format_source_chunk_ids(quiz.source_chunk_ids)
+        source_info = _format_source_chunk_ids(quiz.source_chunk_ids)
 
-        if source_note:
+        if source_info:
             lines.extend(
                 [
                     "",
-                    source_note,
+                    source_info,
                 ]
             )
 
@@ -526,12 +495,10 @@ def format_markdown(
         state: C 분석 결과와 quiz_items가 포함된 AgentState.
 
     Returns:
-        YAML Front Matter와 각 분석 섹션이 포함된 최종 Markdown 문자열.
+        각 분석 섹션이 포함된 최종 Markdown 문자열.
     """
 
-    sections: list[str] = [
-        _format_yaml(state),
-    ]
+    sections: list[str] = []
 
     _append_section(
         sections,
@@ -575,4 +542,9 @@ def format_markdown(
         _format_quiz_items(state),
     )
 
-    return "\n\n".join(sections).strip() + "\n"
+    markdown = "\n\n".join(sections).strip()
+
+    if not markdown:
+        return ""
+
+    return markdown + "\n"

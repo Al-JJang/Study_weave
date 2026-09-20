@@ -2,16 +2,17 @@
 workers/formatter/markdown.py 검증 테스트.
 
 확인 항목:
-1. YAML Front Matter에 request_id와 route가 포함되는지 확인
-2. 개념, 코드 분석, 흐름도, 참조표가 Markdown으로 변환되는지 확인
+1. 개념, 코드 분석, 흐름도, 참조표가 Markdown으로 변환되는지 확인
+2. 참조표 셀 내부의 파이프 문자가 이스케이프되는지 확인
 3. concept_ref가 concept_id에 대응하는 개념 제목으로 표시되는지 확인
 4. Practice Notes가 Markdown으로 변환되는지 확인
 5. MCQ, 단답형, True/False 퀴즈가 유형에 맞게 출력되는지 확인
 6. 정답과 해설이 details 태그 내부에 포함되는지 확인
-7. source_chunk_ids가 NOTE callout으로 표시되는지 확인
-8. EMPTY_SECTION_POLICY가 omit이면 빈 섹션을 생략하는지 확인
-9. EMPTY_SECTION_POLICY가 placeholder이면 빈 섹션 안내 문구를 출력하는지 확인
-10. 최종 Markdown 섹션 순서가 유지되는지 확인
+7. source_chunk_ids가 일반 Markdown으로 표시되는지 확인
+8. 확인 필요 및 주의 문구가 일반 Markdown으로 표시되는지 확인
+9. EMPTY_SECTION_POLICY가 omit이면 빈 섹션을 생략하는지 확인
+10. EMPTY_SECTION_POLICY가 placeholder이면 빈 섹션 안내 문구를 출력하는지 확인
+11. 최종 Markdown 섹션 순서가 유지되는지 확인
 """
 
 from __future__ import annotations
@@ -38,8 +39,6 @@ def _make_sample_state() -> AgentState:
     """
 
     return {
-        "request_id": "req-001",
-        "route": "both",
         "concepts": [
             ConceptItem(
                 concept_id="concept-langgraph",
@@ -164,16 +163,6 @@ def _make_sample_state() -> AgentState:
     }
 
 
-def test_format_markdown_contains_yaml_front_matter() -> None:
-    """YAML Front Matter에 request_id와 route가 포함되는지 확인합니다."""
-
-    markdown = format_markdown(_make_sample_state())
-
-    assert markdown.startswith("---")
-    assert 'request_id: "req-001"' in markdown
-    assert 'route: "both"' in markdown
-
-
 def test_format_markdown_contains_analysis_sections() -> None:
     """C 분석 결과가 각 Markdown 섹션에 포함되는지 확인합니다."""
 
@@ -220,8 +209,7 @@ def test_format_markdown_contains_practice_notes() -> None:
 
     assert "## Practice Notes" in markdown
     assert "Router와 Worker의 역할을 혼동할 수 있습니다." in markdown
-    assert "> [!NOTE] 주의" in markdown
-    assert "Router는 작업을 직접 수행하지 않습니다." in markdown
+    assert "**주의:** Router는 작업을 직접 수행하지 않습니다." in markdown
 
 
 def test_format_markdown_formats_quiz_types() -> None:
@@ -254,13 +242,22 @@ def test_format_markdown_hides_quiz_answer_in_details() -> None:
     assert "</details>" in markdown
 
 
-def test_format_markdown_contains_source_chunk_note() -> None:
-    """근거 Chunk ID가 NOTE callout으로 표시되는지 확인합니다."""
+def test_format_markdown_contains_source_chunk_info() -> None:
+    """근거 Chunk ID가 일반 Markdown 문자열로 표시되는지 확인합니다."""
 
     markdown = format_markdown(_make_sample_state())
 
-    assert "> [!NOTE] 근거 Chunk" in markdown
-    assert "> chunk-001" in markdown
+    assert "**근거 Chunk:** chunk-001" in markdown
+    assert "> [!NOTE]" not in markdown
+
+
+def test_format_markdown_uses_plain_verification_text() -> None:
+    """확인 필요 문구가 callout이 아닌 일반 Markdown으로 표시되는지 확인합니다."""
+
+    markdown = format_markdown(_make_sample_state())
+
+    assert "**확인 필요:** 이미지/비전 기반 추출 결과가 포함되어 있습니다." in markdown
+    assert "> [!NOTE] 확인 필요" not in markdown
 
 
 def test_format_markdown_omits_empty_sections(
@@ -275,8 +272,6 @@ def test_format_markdown_omits_empty_sections(
     )
 
     state: AgentState = {
-        "request_id": "req-empty",
-        "route": "pdf_only",
         "concepts": [],
         "code_units": [],
         "flows": [],
@@ -288,6 +283,7 @@ def test_format_markdown_omits_empty_sections(
 
     markdown = format_markdown(state)
 
+    assert markdown == ""
     assert "## 개념 정리" not in markdown
     assert "## 코드 분석" not in markdown
     assert "## Quiz" not in markdown
@@ -305,8 +301,6 @@ def test_format_markdown_uses_placeholder_for_empty_sections(
     )
 
     state: AgentState = {
-        "request_id": "req-empty",
-        "route": "pdf_only",
         "concepts": [],
         "code_units": [],
         "flows": [],
