@@ -22,7 +22,7 @@
     - 프로젝트 루트에 .env 만들고 GEMINI_API_KEY 넣기 (키 값을 코드에 하드코딩 금지)
     - LLM_PROVIDER / EMBEDDING_PROVIDER 를 gemini | ollama 로 전환 실험
     - EMBEDDING_DIMENSION 과 pgvector 컬럼 차원을 맞출지 팀 합의
-    - TOP_K / DISTANCE_THRESHOLD 초기값 확정 (체크리스트 Tier 2)
+    - TOP_K=5 / SIMILARITY_THRESHOLD=0.6 확정 (코사인 유사도 점수 기준, WEAVE-19)
     - get_chat_model() / get_embeddings() 를 직접 구현 (아래는 슬롯만)
 """
 
@@ -83,9 +83,9 @@ GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2
 # day1 GENERATION_MODEL / EMBEDDING_MODEL 별칭
 GENERATION_MODEL = GEMINI_MODEL
 EMBEDDING_MODEL = GEMINI_EMBEDDING_MODEL
-# 강의 코드의 EMBEDDING_DIMESION(오타) 과 같은 값. 철자만 바로잡음.
-# nomic-embed-text 도 768. bge-m3 로 바꾸면 1024 로 맞추고 collection 재생성.
-EMBEDDING_DIMENSION = int(os.getenv("EMBEDDING_DIMENSION", "768"))
+# WEAVE-19: gemini-embedding-2 기준 1536차원으로 확정.
+# 임베딩 모델을 바꾸면 이 값과 db/init.sql 의 vector(N) 컬럼도 같이 맞춰야 한다.
+EMBEDDING_DIMENSION = int(os.getenv("EMBEDDING_DIMENSION", "1536"))
 
 # OpenAI-compatible 엔드포인트도 가능 (Ollama: http://localhost:11434/v1)
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -97,7 +97,9 @@ OLLAMA_VERIFY_MODEL = os.getenv("OLLAMA_VERIFY_MODEL", "llama3.2:3b")
 OLLAMA_ROUTE_MODEL = os.getenv("OLLAMA_ROUTE_MODEL", "llama3.2:1b")
 
 VECTOR_TOP_K = 5
-DISTANCE_THRESHOLD = None  # None 이면 threshold 없이 TOP_K 만 사용
+# 코사인 유사도 점수 기준(1 - cosine distance, pgvector `<=>` 연산자 사용).
+# 1에 가까울수록 유사. 이 값 미만인 매치는 근거로 쓰지 않음.
+SIMILARITY_THRESHOLD = 0.6
 
 # 입력 없는 마크다운 섹션: "omit" 이면 생략, "placeholder" 면 안내 문구
 EMPTY_SECTION_POLICY = "omit"
@@ -140,13 +142,19 @@ def get_chat_model(*, role: Literal["generate", "verify", "route"] = "generate")
 
 def get_embeddings():
     """
-    강의 day3 GoogleGenerativeAIEmbeddings 또는 OllamaEmbeddings.
+    임베딩 모델 인스턴스를 반환한다.
 
-    스터디에서 채울 import:
-        from langchain_google_genai import GoogleGenerativeAIEmbeddings
-        from langchain_ollama import OllamaEmbeddings
-        # day1 직접 SDK: from google import genai; from google.genai import types
-        # client.models.embed_content(model=EMBEDDING_MODEL, ...,
-        #     config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSION))
+    WEAVE-19: Gemini만 구현. Ollama(EMBEDDING_PROVIDER=ollama)는 아직 미지원.
     """
-    raise NotImplementedError(f"config.get_embeddings — EMBEDDING_PROVIDER={EMBEDDING_PROVIDER}")
+    if EMBEDDING_PROVIDER != "gemini":
+        raise NotImplementedError(
+            f"config.get_embeddings — EMBEDDING_PROVIDER={EMBEDDING_PROVIDER} 는 아직 미구현 (Gemini만 지원)"
+        )
+
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    return GoogleGenerativeAIEmbeddings(
+        model=GEMINI_EMBEDDING_MODEL,
+        google_api_key=require_gemini_key(),
+        output_dimensionality=EMBEDDING_DIMENSION,
+    )
