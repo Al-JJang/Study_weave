@@ -133,10 +133,24 @@ def get_chat_model(*, role: Literal["generate", "verify", "route"] = "generate")
         # 또는 OpenAI-compatible:
         # from langchain_openai import ChatOpenAI
         # ChatOpenAI(base_url=f"{OLLAMA_BASE_URL}/v1", api_key="ollama", model=...)
+
+    WEAVE-22: role="generate" (Gemini)만 구현. verify/route, ollama는 아직 미지원.
     """
-    raise NotImplementedError(
-        f"config.get_chat_model(role={role!r}) — "
-        f"LLM_PROVIDER={LLM_PROVIDER}, EMBEDDING_PROVIDER={EMBEDDING_PROVIDER}"
+    if role != "generate":
+        raise NotImplementedError(
+            f"config.get_chat_model(role={role!r}) — generate 외 role은 아직 미구현"
+        )
+    if LLM_PROVIDER != "gemini":
+        raise NotImplementedError(
+            f"config.get_chat_model — LLM_PROVIDER={LLM_PROVIDER} 는 아직 미구현 (Gemini만 지원)"
+        )
+
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
+    return ChatGoogleGenerativeAI(
+        model=GEMINI_MODEL,
+        google_api_key=require_gemini_key(),
+        temperature=0,
     )
 
 
