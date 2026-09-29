@@ -5,11 +5,13 @@ from __future__ import annotations
 from langchain_core.runnables import RunnableLambda
 
 import config
-from schemas.analysis import CodeAnalysisItem, ConceptItem
+from schemas.analysis import CodeAnalysisItem, ConceptItem, FlowDiagram, ReferenceTable
 from schemas.files import RetrievedChunk
 from workers.analysis.code_flow import CodeUnitList, produce_code_units
 from workers.analysis.concept import ConceptList, produce_concepts
+from workers.analysis.flow_diagrams import FlowDiagramList, produce_flows
 from workers.analysis.nodes import analyze_node, build_evidence_context
+from workers.analysis.reference_tables import ReferenceTableList, produce_tables
 
 
 class _FakeModel:
@@ -102,6 +104,64 @@ def test_produce_code_units_drops_unknown_chunk_ids(monkeypatch):
     monkeypatch.setattr(config, "get_chat_model", lambda **_: _FakeModel(payload))
 
     assert [item.unit_name for item in produce_code_units([chunk])] == ["ok"]
+
+
+def test_produce_flows_drops_unknown_chunk_ids(monkeypatch):
+    chunk = _pdf_chunk("real")
+    payload = FlowDiagramList(
+        flows=[
+            FlowDiagram(
+                scope="execution_trace",
+                title="ok",
+                diagram="A → B",
+                description="d",
+                source_chunk_ids=["real"],
+            ),
+            FlowDiagram(
+                scope="pipeline",
+                title="hallucinated",
+                diagram="A → B",
+                description="d",
+                source_chunk_ids=["made-up"],
+            ),
+        ]
+    )
+    monkeypatch.setattr(config, "get_chat_model", lambda **_: _FakeModel(payload))
+
+    assert [flow.title for flow in produce_flows([chunk])] == ["ok"]
+
+
+def test_produce_tables_drops_rows_that_do_not_match_columns(monkeypatch):
+    """행 길이가 열 개수와 다르면 포맷터에서 Markdown 표가 깨지므로 버린다."""
+    chunk = _pdf_chunk("real")
+    payload = ReferenceTableList(
+        tables=[
+            ReferenceTable(
+                title="ok",
+                columns=["파일", "주제"],
+                rows=[["agentEx1", "Tool 기초"]],
+                source_chunk_ids=["real"],
+            ),
+            ReferenceTable(
+                title="misaligned",
+                columns=["파일", "주제"],
+                rows=[["agentEx1"]],
+                source_chunk_ids=["real"],
+            ),
+        ]
+    )
+    monkeypatch.setattr(config, "get_chat_model", lambda **_: _FakeModel(payload))
+
+    assert [table.title for table in produce_tables([chunk])] == ["ok"]
+
+
+def test_produce_flows_and_tables_skip_llm_without_chunks(monkeypatch):
+    def _boom(**_):
+        raise AssertionError("LLM 을 호출하면 안 된다")
+
+    monkeypatch.setattr(config, "get_chat_model", _boom)
+    assert produce_flows([]) == []
+    assert produce_tables([]) == []
 
 
 def _stub_producers(monkeypatch) -> list[str]:
