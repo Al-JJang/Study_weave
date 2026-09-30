@@ -181,6 +181,7 @@ export function SourcesPage() {
       </div>
 
       <UploadDialog
+        key={kind}
         open={uploadOpen}
         onOpenChange={setUploadOpen}
         onUploaded={() => void refresh()}

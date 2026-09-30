@@ -28,8 +28,7 @@ def test_sanitize_relpath_keeps_nested_code() -> None:
     assert sanitize_relpath("rag/hybrid.py") == "rag/hybrid.py"
     with pytest.raises(ValueError):
         sanitize_relpath("../secret.py")
-    with pytest.raises(ValueError):
-        sanitize_relpath("node_modules/pkg/index.js")
+    assert should_skip_relpath("node_modules/pkg/index.js")
 
 
 def test_heuristic_reads_keywords() -> None:

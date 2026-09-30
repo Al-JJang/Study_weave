@@ -169,8 +169,6 @@ def is_code_folder_file(relpath: str) -> bool:
 
 def sanitize_relpath(raw: str | None) -> str:
     rel = normalize_relpath(raw)
-    if should_skip_relpath(rel):
-        raise ValueError("이 경로는 건너뜁니다.")
     parts = rel.split("/")
     cleaned = [
         sanitize_filename(part) if index == len(parts) - 1 else topic_slug(part) or "folder"

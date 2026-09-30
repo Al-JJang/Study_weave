@@ -173,13 +173,15 @@ def test_folder_upload_classifies_and_skips_vendor(
     monkeypatch.setattr("api.classify.config.GEMINI_API_KEY", None)
     response = client.post(
         "/api/sources/folder",
-        data=[
-            ("user_id", "donggyu"),
-            ("study_date", "10/7"),
-            ("paths", "week/rag/retriever.py"),
-            ("paths", "week/agent/loop.py"),
-            ("paths", "week/node_modules/pkg/index.js"),
-        ],
+        data={
+            "user_id": "donggyu",
+            "study_date": "10/7",
+            "paths": [
+                "week/rag/retriever.py",
+                "week/agent/loop.py",
+                "week/node_modules/pkg/index.js",
+            ],
+        },
         files=[
             ("files", ("retriever.py", b"def retrieve():\n    return []\n", "text/x-python")),
             ("files", ("loop.py", b"from langgraph.graph import StateGraph\n", "text/x-python")),
@@ -209,11 +211,7 @@ def test_folder_upload_uses_gemini_topics(
     monkeypatch.setattr("api.classify.get_chat_model", lambda **_: FakeModel())
     response = client.post(
         "/api/sources/folder",
-        data=[
-            ("user_id", "songju"),
-            ("study_date", "10/7"),
-            ("paths", "lesson/src/a.py"),
-        ],
+        data={"user_id": "songju", "study_date": "10/7", "paths": ["lesson/src/a.py"]},
         files=[("files", ("a.py", b"print('hi')\n", "text/x-python"))],
     )
     assert response.status_code == 201, response.text
@@ -227,12 +225,7 @@ def test_folder_upload_forced_topic(client: TestClient, monkeypatch: pytest.Monk
     monkeypatch.setattr("api.classify.config.GEMINI_API_KEY", None)
     response = client.post(
         "/api/sources/folder",
-        data=[
-            ("user_id", "saegyeol"),
-            ("study_date", "10/7"),
-            ("topic", "퀴즈"),
-            ("paths", "bundle/quiz.py"),
-        ],
+        data={"user_id": "saegyeol", "study_date": "10/7", "topic": "퀴즈", "paths": ["bundle/quiz.py"]},
         files=[("files", ("quiz.py", b"print(1)\n", "text/x-python"))],
     )
     assert response.status_code == 201

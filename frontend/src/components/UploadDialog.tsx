@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,15 @@ export function UploadDialog({
   const copy = MATERIAL_KINDS[kind];
   const folderMode = kind === "code" && mode === "folder";
   const folderName = folderFiles[0]?.webkitRelativePath.split("/")[0] ?? "";
+
+  useEffect(() => {
+    if (!open) return;
+    setKind(materialKind);
+    setMode(materialKind === "code" ? "folder" : "file");
+    setFile(null);
+    setFolderFiles([]);
+    setError(null);
+  }, [open, materialKind]);
 
   const resetFiles = () => {
     setFile(null);
