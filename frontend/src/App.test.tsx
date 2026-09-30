@@ -17,7 +17,7 @@ describe("StudyWeave UI", () => {
     );
   });
 
-  it("대시보드에 한국어 인사와 카드가 보인다", async () => {
+  it("대시보드에 한 줄 설명과 카드가 보인다", async () => {
     render(
       <MemoryRouter>
         <App />
@@ -28,10 +28,12 @@ describe("StudyWeave UI", () => {
     expect(screen.getByRole("link", { name: "강의 진행 기록" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "수업 내용 검색" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "수업 내용 검색" })).toBeInTheDocument();
-    expect(screen.getByText("안녕하세요")).toBeInTheDocument();
     expect(
-      await screen.findByText("StudyWeave가 학습에 어떻게 도움이 될까요?"),
+      await screen.findByRole("heading", {
+        name: "올린 수업 자료로 노트와 퀴즈를 만들고, 내용을 검색합니다.",
+      }),
     ).toBeInTheDocument();
+    expect(screen.queryByText("안녕하세요")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 업로드" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "새 노트 생성" })).toBeInTheDocument();
     expect(await screen.findByText("아직 노트가 없습니다")).toBeInTheDocument();

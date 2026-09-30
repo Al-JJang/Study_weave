@@ -40,14 +40,9 @@ export function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <p className="text-lg text-muted">안녕하세요</p>
-      <h1 className="mt-1 max-w-2xl bg-linear-to-r from-[#4f3ed4] to-[#9a7dff] bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
-        StudyWeave가 학습에 어떻게 도움이 될까요?
+      <h1 className="max-w-3xl bg-linear-to-r from-[#4f3ed4] to-[#9a7dff] bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
+        올린 수업 자료로 노트와 퀴즈를 만들고, 내용을 검색합니다.
       </h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-        수업 자료와 코드를 올리면 개념 정리, 코드 흐름, 복습 퀴즈가 한 노트로 모입니다.
-        팀원끼리만 쓰는 학습 도구라 계정이나 결제 없이 바로 쓰면 됩니다.
-      </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <ActionCard
