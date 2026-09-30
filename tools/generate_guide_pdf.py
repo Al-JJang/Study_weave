@@ -313,7 +313,9 @@ graph/supervisor.py   (StateGraph.compile → invoke)
         ├─ workers/analysis/concept.py
         ├─ workers/analysis/code_flow.py
         ├─ workers/analysis/cross_reference.py
-        └─ workers/analysis/troubleshooting.py
+        ├─ workers/analysis/flow_diagrams.py
+        ├─ workers/analysis/reference_tables.py
+        └─ workers/analysis/practice_notes.py
   5) workers/formatter/nodes.py   format_node
         ├─ workers/formatter/quiz.py
         └─ workers/formatter/markdown.py
@@ -345,7 +347,7 @@ ui/tabs.py  ←  완성된 AgentState
                 [
                     "analyze",
                     "workers/analysis/nodes.py",
-                    "concept_summary, code_analysis, cross_references, troubleshooting, status",
+                    "concepts, code_units, flows, tables, cross_references, practice_notes, status",
                 ],
                 [
                     "format",
@@ -386,7 +388,7 @@ ui/tabs.py  ←  완성된 AgentState
                 [
                     "schemas/analysis.py",
                     "C가 채움, D·UI가 읽음",
-                    "ConceptItem, CodeAnalysisItem, CrossReferenceItem, TroubleshootingItem.",
+                    "ConceptItem, CodeAnalysisItem, FlowDiagram, ReferenceTable, CrossReferenceItem, PracticeNote.",
                 ],
                 [
                     "schemas/quiz.py",
@@ -502,7 +504,7 @@ DATABASE_URL=postgresql://localhost:5432/studywave
                 "<font face='Courier'>graph/verify.py</font> 의 collect_known_chunk_ids 부터 채운다. parsed_chunks 와 retrieved_chunks 의 chunk_id 집합이면 충분하다.",
                 "validate_citations: C·D 항목의 source_chunk_ids 가 그 집합 안에 있는지 본다. 없는 id 는 issues 문자열로 남긴다.",
                 "validate_quiz_items: quiz_type 이 mcq 이면 answer 가 options 에 있어야 한다. 실패한 문항은 dropped_quiz_ids 에 인덱스를 넣는다.",
-                "validate_route_outputs: pdf_only 인데 concept_summary 가 [] 이면 실패, code_only 인데 code_analysis 가 [] 이면 실패, both 인데 cross_references 가 [] 이면 실패.",
+                "validate_route_outputs: pdf_only 인데 concepts 가 [] 이면 실패, code_only 인데 code_units 가 [] 이면 실패, both 인데 cross_references 가 [] 이면 실패.",
                 "verify_node 에서 위 세 함수를 모아 VerificationReport 를 만들고 status 를 completed 또는 failed 로 둔다.",
                 "config.NODE_FAILURE_POLICY 가 retry 이고 retryable 에러가 있으면 supervisor 에 add_conditional_edges 를 추가한다. 기본값은 partial 이라 부분 결과를 UI에 넘겨도 된다.",
             ]
@@ -596,8 +598,8 @@ DATABASE_URL=postgresql://localhost:5432/studywave
         P("9. C 작업 가이드 — 개념 / 코드 흐름 / 교차 매핑", "h1"),
         P(
             "C는 retrieved_chunks 만 보고 분석 항목을 만든다. 원본 PDF를 다시 열지 않는다. "
-            "퀴즈와 최종 .md 는 D의 일이다. C가 채우는 key 는 concept_summary, code_analysis, "
-            "cross_references, troubleshooting 네 개다.",
+            "퀴즈와 최종 .md 는 D의 일이다. C가 채우는 key 는 concepts, code_units, flows, tables, "
+            "cross_references, practice_notes 여섯 개다.",
         ),
         P("9.1 담당 파일", "h2"),
         table(
@@ -624,9 +626,19 @@ DATABASE_URL=postgresql://localhost:5432/studywave
                     "list[CrossReferenceItem]",
                 ],
                 [
-                    "workers/analysis/troubleshooting.py",
+                    "workers/analysis/flow_diagrams.py",
+                    "파이프라인·커리큘럼·실행 흐름도",
+                    "list[FlowDiagram]",
+                ],
+                [
+                    "workers/analysis/reference_tables.py",
+                    "비교·요약 참조표",
+                    "list[ReferenceTable]",
+                ],
+                [
+                    "workers/analysis/practice_notes.py",
                     "자주 나는 실수와 고치는 법",
-                    "list[TroubleshootingItem]",
+                    "list[PracticeNote]",
                 ],
                 [
                     "workers/analysis/nodes.py",
@@ -635,7 +647,7 @@ DATABASE_URL=postgresql://localhost:5432/studywave
                 ],
                 [
                     "schemas/analysis.py",
-                    "AnalysisLLMOutput 묶음 스키마",
+                    "AnalysisOutput 묶음 스키마",
                     "structured output 대상",
                 ],
             ],
@@ -646,30 +658,38 @@ DATABASE_URL=postgresql://localhost:5432/studywave
             [
                 "mocks/data.py 의 MOCK_RETRIEVED_CHUNKS 를 입력으로 삼아, LLM 없이 ConceptItem 을 손으로 하나 만들어 model_validate 가 통과하는지 본다. 스키마를 먼저 몸에 익힌다.",
                 "build_evidence_context: 각 Chunk 를 [chunk_id | pdf p.N 또는 code Lx-Ly] 헤더 + content 블록으로 이어 붙인다. 토큰이 커지면 상위 TOP_K 만 쓴다.",
-                "prompts.py 에 네 개의 지시문을 적는다. 공통 문장: 근거 블록에 없는 사실은 쓰지 말 것, 각 항목에 source_chunk_ids 를 넣을 것, JSON만 출력할 것.",
-                'config.get_chat_model(role="generate") 로 Gemini 를 받는다. 강의의 ChatGoogleGenerativeAI 또는 interactions.create + response_format schema=AnalysisLLMOutput.model_json_schema() 중 팀에서 하나를 고른다.',
+                "prompts.py 에 여섯 개의 지시문을 적는다. 공통 문장: 근거 블록에 없는 사실은 쓰지 말 것, 각 항목에 source_chunk_ids 를 넣을 것, JSON만 출력할 것.",
+                'config.get_chat_model(role="generate") 로 Gemini 를 받는다. 강의의 ChatGoogleGenerativeAI 또는 interactions.create + response_format schema=AnalysisOutput.model_json_schema() 중 팀에서 하나를 고른다.',
                 "concept.py: PDF Chunk 가 있을 때만 호출. title + summary + source_chunk_ids.",
                 "code_flow.py: 코드 Chunk 가 있을 때만 호출. 실행 순서와 핵심 문법(예: 필터 연산자, where)을 설명한다.",
                 "cross_reference.py: route 가 both 일 때만. theory_chunk_ids 와 code_chunk_ids 를 함께 넣는다. 문장 예시는 “이 코드의 WHERE 는 교안 p.3 메타데이터 필터를 구현한다.”",
-                "troubleshooting.py: 초기에 흔한 실패(필터 누락, 차원 불일치)를 박스 형태로. source_chunk_ids 는 있으면 넣고 없으면 [].",
-                "analyze_node: route 가 pdf_only 면 개념만, code_only 면 코드만, both 면 네 리스트 모두. 쓰지 않는 키는 [] 로 반환한다.",
+                "flow_diagrams.py / reference_tables.py: scope 3종(pipeline·curriculum_progression·execution_trace)과 비교축이 분명할 때만 만든다. 근거가 부족하면 비워 둔다.",
+                "practice_notes.py: 초기에 흔한 실패(필터 누락, 차원 불일치)를 박스 형태로. 서술이 아니라 행동 지침이나 점검 항목으로 쓴다.",
+                "analyze_node: route 가 pdf_only 면 개념만, code_only 면 코드만, both 면 전부. flows/tables 는 route 와 무관하게 만든다. 쓰지 않는 키는 [] 로 반환한다.",
             ]
         ),
         P("9.3 route 와 산출 대응", "h2"),
         table(
-            ["route", "concept_summary", "code_analysis", "cross_references", "troubleshooting"],
             [
-                ["pdf_only", "1개 이상", "[]", "[]", "[] 또는 선택"],
-                ["code_only", "[]", "1개 이상", "[]", "[] 또는 선택"],
-                ["both", "1개 이상", "1개 이상", "1개 이상", "있으면 채움"],
+                "route",
+                "concepts",
+                "code_units",
+                "flows / tables",
+                "cross_references",
+                "practice_notes",
             ],
-            [32 * mm, 36 * mm, 36 * mm, 40 * mm, 32 * mm],
+            [
+                ["pdf_only", "1개 이상", "[]", "있으면 채움", "[]", "[]"],
+                ["code_only", "[]", "1개 이상", "있으면 채움", "[]", "[]"],
+                ["both", "1개 이상", "1개 이상", "있으면 채움", "1개 이상", "있으면 채움"],
+            ],
+            [24 * mm, 24 * mm, 26 * mm, 30 * mm, 36 * mm, 32 * mm],
         ),
         Spacer(1, 3 * mm),
         P("9.4 완료 기준", "h2"),
         bullets(
             [
-                "MOCK_RETRIEVED_CHUNKS 만으로 AnalysisLLMOutput 이 파싱된다.",
+                "MOCK_RETRIEVED_CHUNKS 만으로 AnalysisOutput 이 파싱된다.",
                 "모든 ConceptItem / CodeAnalysisItem 에 source_chunk_ids 가 1개 이상이다.",
                 "both 샘플에서 cross_references 가 PDF chunk 와 code chunk 를 동시에 가리킨다.",
                 "D는 C 함수를 import 하지 않고 AgentState 의 네 리스트만 읽어도 마크다운을 만들 수 있다.",
@@ -716,12 +736,12 @@ DATABASE_URL=postgresql://localhost:5432/studywave
         numbered(
             [
                 "schemas/quiz.py 를 연다. quiz_type 은 mcq / short / true_false. mcq 는 options 4개를 목표로 한다. answer 는 “1번”이 아니라 options 안의 문자열과 완전히 같다.",
-                "mocks 의 MOCK_CONCEPT_SUMMARY, MOCK_CODE_ANALYSIS 만으로 QuizItem 두 개를 손으로 만들어 model_validate 한다.",
+                "mocks 의 MOCK_CONCEPTS, MOCK_CODE_UNITS 만으로 QuizItem 두 개를 손으로 만들어 model_validate 한다.",
                 "produce_quiz_items: C 산출과 retrieved_chunks 를 프롬프트에 넣고 Gemini 로 3~5문항을 받는다. 각 문항에 source_chunk_ids 를 넣는다. 객관과 주관을 섞는다.",
                 "format_markdown 목차 순서를 고정한다. YAML → 개념 → 코드 흐름 → 이론-코드 연결 → Troubleshooting → Quiz. 빈 섹션은 config.EMPTY_SECTION_POLICY 가 omit 이면 제목째 뺀다.",
                 "YAML 예: request_id, route, tags: [studywave, 주제]. Obsidian 이 읽는 frontmatter 형식을 지킨다.",
                 "퀴즈 블록은 HTML details 또는 마크다운 토글로 정답·해설을 접는다. 콜아웃은 &gt; [!NOTE], &gt; [!WARNING] 형식을 쓴다. Streamlit 탭도 같은 데이터를 쓰므로 문장 내용을 두 벌로 만들지 않는다.",
-                "format_node 는 quiz 와 markdown 만 호출해 dict 로 반환한다. concept_summary 를 여기서 비우지 않는다.",
+                "format_node 는 quiz 와 markdown 만 호출해 dict 로 반환한다. concepts 를 여기서 비우지 않는다.",
             ]
         ),
         P("10.3 마크다운 뼈대", "h2"),
@@ -792,7 +812,7 @@ tags: [studywave, langgraph]
                 [
                     "ui/tabs.py",
                     "세 탭 렌더",
-                    "concept_summary / code_analysis / quiz_items",
+                    "concepts / code_units / quiz_items",
                 ],
             ],
             [42 * mm, 68 * mm, 66 * mm],
@@ -830,7 +850,7 @@ tags: [studywave, langgraph]
                 ["workers/analysis/concept.py", "C", "source_chunk_ids 가 있는가"],
                 ["workers/analysis/code_flow.py", "C", "실행 순서가 문장에 드러나는가"],
                 ["workers/analysis/cross_reference.py", "C", "PDF id 와 코드 id 가 같이 있는가"],
-                ["workers/analysis/troubleshooting.py", "C", "증상-원인-조치 세 칸인가"],
+                ["workers/analysis/practice_notes.py", "C", "행동 지침이나 점검 항목으로 쓰였는가"],
                 ["workers/analysis/nodes.py", "C", "route 별 빈 리스트 규칙이 맞는가"],
                 ["workers/formatter/quiz.py", "D", "3~5문항, answer=보기 문자열인가"],
                 ["workers/formatter/markdown.py", "D", "YAML 과 토글이 있는가"],

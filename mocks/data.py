@@ -131,7 +131,7 @@ MOCK_CONCEPTS = [
             "함수의 docstring 이 그대로 Tool Description 으로 쓰이며, LLM 은 이 설명만 보고 "
             "Tool 사용 여부를 판단하므로 목적/사용 시점/사용하면 안 되는 경우까지 docstring 에 명시해야 한다."
         ),
-        related_code_refs=["code-001"],
+        related_code_refs=["agentEx4.py"],
         source_chunk_ids=[MOCK_PARSED_CHUNKS[0].chunk_id],
     ),
     ConceptItem(
@@ -142,7 +142,7 @@ MOCK_CONCEPTS = [
             "다시 LLM 에게 보여주고 다음 행동을 스스로 판단하게 하는 구조다. "
             "tool_rounds 카운터와 MAX_TOOL_ROUNDS 상한으로 무한 루프를 방지한다."
         ),
-        related_code_refs=["code-001"],
+        related_code_refs=["agentEx4.py"],
         source_chunk_ids=[MOCK_PARSED_CHUNKS[1].chunk_id],
     ),
 ]
@@ -202,7 +202,7 @@ MOCK_TABLES = [
 MOCK_CROSS_REFERENCES = [
     CrossReferenceItem(
         ref_type="matched",
-        code_ref="code-001",
+        code_ref="agentEx4.py",
         concept_ref="concept-002",
         explanation=(
             "교안의 Agent Loop 설명(agent→tools→agent 순환, tool_rounds 카운터)이 "
