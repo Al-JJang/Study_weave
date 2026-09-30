@@ -27,7 +27,7 @@ export function NotesPage() {
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">노트</h1>
+          <h1 className="text-2xl font-semibold">강의 진행 기록</h1>
           <p className="mt-1 text-sm text-muted">소스에서 만든 학습 노트와 직접 만든 빈 노트입니다.</p>
         </div>
         <Button onClick={() => void createNote()} disabled={creating}>

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/", label: "대시보드", icon: LayoutDashboard, end: true },
   { to: "/sources", label: "소스", icon: FileUp, end: false },
-  { to: "/notes", label: "노트", icon: NotebookPen, end: false },
+  { to: "/notes", label: "강의 진행 기록", icon: NotebookPen, end: false },
 ];
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
@@ -77,7 +77,7 @@ export function AppShell() {
           <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="메뉴 열기">
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="font-semibold">StudyWeave AI</span>
+          <BrandMark />
         </header>
         <main className="px-4 py-6 sm:px-8 lg:px-12">
           <Outlet />
@@ -89,10 +89,20 @@ export function AppShell() {
 
 function Brand() {
   return (
-    <div className="mb-8 flex items-center gap-2 px-2">
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lavender text-sm font-bold text-white">
-        S
-      </span>
+    <div className="mb-8 px-2">
+      <BrandMark />
+    </div>
+  );
+}
+
+function BrandMark() {
+  return (
+    <div className="flex items-center gap-2">
+      <img
+        src="/studyweave-logo.png"
+        alt="StudyWeave AI"
+        className="h-9 w-9 shrink-0 rounded-xl object-cover object-[50%_28%]"
+      />
       <span className="font-semibold tracking-tight">StudyWeave AI</span>
     </div>
   );

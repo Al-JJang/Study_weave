@@ -24,6 +24,10 @@ describe("StudyWeave UI", () => {
       </MemoryRouter>,
     );
     expect(screen.getAllByText("StudyWeave AI").length).toBeGreaterThan(0);
+    expect(screen.getAllByAltText("StudyWeave AI").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "강의 진행 기록" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "수업 내용 검색" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "수업 내용 검색" })).toBeInTheDocument();
     expect(screen.getByText("안녕하세요")).toBeInTheDocument();
     expect(
       await screen.findByText("StudyWeave가 학습에 어떻게 도움이 될까요?"),

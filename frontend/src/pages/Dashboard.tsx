@@ -72,15 +72,16 @@ export function DashboardPage() {
       </div>
 
       <section className="mt-10">
-        <h2 className="mb-3 text-base font-semibold">내 노트 파헤치기</h2>
+        <h2 className="mb-3 text-base font-semibold">수업 내용 검색</h2>
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted" />
           <Input
+            type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="최근 수업이나 코드에 대해 찾아보세요"
+            placeholder="수업 내용이나 코드를 검색하세요"
             className="h-14 rounded-3xl pl-11"
-            aria-label="노트 검색"
+            aria-label="수업 내용 검색"
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
