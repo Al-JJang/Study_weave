@@ -167,6 +167,80 @@ def test_upload_lecture_material_uses_lecture_folder(client: TestClient, tmp_pat
     )
 
 
+def test_folder_upload_classifies_and_skips_vendor(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("api.classify.config.GEMINI_API_KEY", None)
+    response = client.post(
+        "/api/sources/folder",
+        data=[
+            ("user_id", "donggyu"),
+            ("study_date", "10/7"),
+            ("paths", "week/rag/retriever.py"),
+            ("paths", "week/agent/loop.py"),
+            ("paths", "week/node_modules/pkg/index.js"),
+        ],
+        files=[
+            ("files", ("retriever.py", b"def retrieve():\n    return []\n", "text/x-python")),
+            ("files", ("loop.py", b"from langgraph.graph import StateGraph\n", "text/x-python")),
+            ("files", ("index.js", b"console.log(1)\n", "text/javascript")),
+        ],
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["classified_by"] == "heuristic"
+    assert len(body["items"]) == 2
+    by_name = {item["filename"]: item for item in body["items"]}
+    assert by_name["rag/retriever.py"]["topic"] == "RAG"
+    assert by_name["agent/loop.py"]["topic"] == "LangGraph"
+    assert (tmp_path / "uploads" / by_name["rag/retriever.py"]["relative_path"]).is_file()
+    assert client.get("/api/notes", params={"user_id": "donggyu"}).json() == []
+
+
+def test_folder_upload_uses_gemini_topics(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("api.classify.config.GEMINI_API_KEY", "test-key")
+
+    class FakeModel:
+        def invoke(self, _messages: object) -> SimpleNamespace:
+            return SimpleNamespace(content='{"files":[{"path":"src/a.py","topic":"프롬프트"}]}')
+
+    monkeypatch.setattr("api.classify.get_chat_model", lambda **_: FakeModel())
+    response = client.post(
+        "/api/sources/folder",
+        data=[
+            ("user_id", "songju"),
+            ("study_date", "10/7"),
+            ("paths", "lesson/src/a.py"),
+        ],
+        files=[("files", ("a.py", b"print('hi')\n", "text/x-python"))],
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["classified_by"] == "gemini"
+    assert body["items"][0]["topic"] == "프롬프트"
+    assert body["items"][0]["filename"] == "src/a.py"
+
+
+def test_folder_upload_forced_topic(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("api.classify.config.GEMINI_API_KEY", None)
+    response = client.post(
+        "/api/sources/folder",
+        data=[
+            ("user_id", "saegyeol"),
+            ("study_date", "10/7"),
+            ("topic", "퀴즈"),
+            ("paths", "bundle/quiz.py"),
+        ],
+        files=[("files", ("quiz.py", b"print(1)\n", "text/x-python"))],
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["classified_by"] == "topic"
+    assert body["items"][0]["topic"] == "퀴즈"
+
+
 def test_upload_rejects_bad_date(client: TestClient) -> None:
     response = client.post(
         "/api/sources",

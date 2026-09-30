@@ -23,6 +23,12 @@ export interface SourceItem {
   note_id: string | null;
 }
 
+export interface FolderUploadResult {
+  items: SourceItem[];
+  classified_by: "gemini" | "heuristic" | "topic";
+  message: string;
+}
+
 export interface NoteItem {
   id: string;
   title: string;
@@ -128,6 +134,22 @@ export const api = {
     if (meta?.studyDate) data.append("study_date", meta.studyDate);
     if (meta?.materialKind) data.append("material_kind", meta.materialKind);
     return request<SourceItem>("/api/sources", { method: "POST", body: data });
+  },
+  uploadCodeFolder: async (
+    userId: string,
+    files: File[],
+    meta?: { topic?: string; studyDate?: string },
+  ) => {
+    const data = new FormData();
+    data.append("user_id", userId);
+    if (meta?.topic) data.append("topic", meta.topic);
+    if (meta?.studyDate) data.append("study_date", meta.studyDate);
+    for (const file of files) {
+      const relative = file.webkitRelativePath || file.name;
+      data.append("files", file, file.name);
+      data.append("paths", relative);
+    }
+    return request<FolderUploadResult>("/api/sources/folder", { method: "POST", body: data });
   },
   desk: (userId: string) => request<DeskResponse>(withUser("/api/desk", userId)),
   createDeskSection: (userId: string, title: string) =>

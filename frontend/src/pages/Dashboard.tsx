@@ -156,8 +156,10 @@ export function DashboardPage() {
       <UploadDialog
         open={uploadOpen}
         onOpenChange={setUploadOpen}
-        onUploaded={(source) => {
+        onUploaded={(items) => {
           void refresh();
+          const source = items[0];
+          if (!source) return;
           navigate(source.material_kind === "code" ? "/sources/code" : "/sources/lectures");
         }}
         topics={[...new Set(sources.map((source) => source.topic).filter(Boolean))]}

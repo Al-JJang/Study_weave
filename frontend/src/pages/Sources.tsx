@@ -60,7 +60,9 @@ export function SourcesPage() {
         <div>
           <h1 className="text-2xl font-semibold">{copy.label}</h1>
           <p className="mt-1 text-sm text-muted">
-            강사님이 올려 주신 {copy.label}를 팀이 같이 봅니다. 7월부터 10월까지 날짜와 주제로 찾아보세요.
+            {kind === "code"
+              ? "강사님 코드를 팀이 같이 봅니다. 폴더를 통째로 올리면 AI가 주제로 나눠 저장합니다."
+              : "강사님이 올려 주신 강의자료를 팀이 같이 봅니다. 7월부터 10월까지 날짜와 주제로 찾아보세요."}
           </p>
         </div>
         <Button onClick={() => setUploadOpen(true)}>{copy.uploadLabel}</Button>

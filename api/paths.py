@@ -13,6 +13,57 @@ _UNSAFE = re.compile(r"[^\w.\-가-힣]+", re.UNICODE)
 
 MaterialKind = Literal["lecture", "code"]
 CODE_SUFFIXES = {".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs", ".c", ".cpp"}
+FOLDER_TEXT_SUFFIXES = CODE_SUFFIXES | {
+    ".md",
+    ".txt",
+    ".json",
+    ".toml",
+    ".yml",
+    ".yaml",
+    ".ipynb",
+    ".sql",
+    ".sh",
+    ".html",
+    ".css",
+}
+SKIP_DIR_NAMES = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".idea",
+        ".vscode",
+        ".next",
+        "dist",
+        "build",
+        "coverage",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
+)
+SKIP_FILE_NAMES = frozenset({".ds_store", "thumbs.db", ".gitignore", ".env"})
+SKIP_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+    ".so",
+    ".dylib",
+    ".dll",
+    ".exe",
+    ".zip",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".pdf",
+}
+SPECIAL_CODE_NAMES = frozenset({"makefile", "dockerfile", "procfile"})
+MAX_REL_DEPTH = 8
 
 
 def parse_material_kind(raw: str | None, *, filename: str) -> MaterialKind:
@@ -73,6 +124,59 @@ def sanitize_filename(original: str) -> str:
     if suffix and not re.fullmatch(r"\.[a-z0-9]{1,8}", suffix):
         suffix = ""
     return f"{cleaned}{suffix}"
+
+
+def normalize_relpath(raw: str | None) -> str:
+    text = (raw or "").replace("\\", "/").strip().lstrip("/")
+    parts: list[str] = []
+    for part in text.split("/"):
+        if not part or part == ".":
+            continue
+        if part == "..":
+            raise ValueError("상대 경로에 .. 를 넣을 수 없습니다.")
+        parts.append(part)
+    if not parts:
+        raise ValueError("파일 경로가 필요합니다.")
+    if len(parts) > MAX_REL_DEPTH:
+        raise ValueError("폴더 깊이가 너무 깊습니다.")
+    return "/".join(parts)
+
+
+def strip_root_segment(relpath: str) -> str:
+    parts = relpath.split("/")
+    if len(parts) <= 1:
+        return relpath
+    return "/".join(parts[1:])
+
+
+def should_skip_relpath(relpath: str) -> bool:
+    parts = [part.lower() for part in relpath.split("/") if part]
+    if any(part in SKIP_DIR_NAMES or part.startswith(".") for part in parts[:-1]):
+        return True
+    name = parts[-1] if parts else ""
+    suffix = Path(name).suffix.lower()
+    if name in SKIP_FILE_NAMES or suffix in SKIP_SUFFIXES:
+        return True
+    return name.startswith(".") and name not in SPECIAL_CODE_NAMES
+
+
+def is_code_folder_file(relpath: str) -> bool:
+    name = Path(relpath).name.lower()
+    if name in SPECIAL_CODE_NAMES or name in {"requirements.txt", "pyproject.toml", "package.json"}:
+        return True
+    return Path(name).suffix.lower() in FOLDER_TEXT_SUFFIXES
+
+
+def sanitize_relpath(raw: str | None) -> str:
+    rel = normalize_relpath(raw)
+    if should_skip_relpath(rel):
+        raise ValueError("이 경로는 건너뜁니다.")
+    parts = rel.split("/")
+    cleaned = [
+        sanitize_filename(part) if index == len(parts) - 1 else topic_slug(part) or "folder"
+        for index, part in enumerate(parts)
+    ]
+    return "/".join(cleaned)
 
 
 def unique_path(directory: Path, filename: str) -> Path:

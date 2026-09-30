@@ -52,6 +52,12 @@ class NoteItem(BaseModel):
     relative_path: str
 
 
+class FolderUploadResponse(BaseModel):
+    items: list[SourceItem]
+    classified_by: Literal["gemini", "heuristic", "topic"]
+    message: str
+
+
 class NoteCreateRequest(BaseModel):
     title: str | None = None
     user_id: str | None = None

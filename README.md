@@ -56,7 +56,8 @@ npm run dev
 | --- | --- | --- |
 | GET | `/api/health` | 헬스체크. `graph_available` 포함 |
 | GET | `/api/users` | 팀원 목록 (서영, 송주, 새결, 동규) |
-| GET/POST | `/api/sources` | 공유 자료 목록 / 업로드 (`user_id`, `topic`, `study_date`, `material_kind=lecture\|code`). 목록은 `user_id` 없이 팀 전체. 저장 경로 `data/uploads/{lecture\|code}/{YYYY-MM-DD}/{주제}/{filename}` |
+| GET/POST | `/api/sources` | 공유 자료 목록 / 단일 파일 업로드 (`user_id`, `topic`, `study_date`, `material_kind=lecture\|code`). 목록은 `user_id` 없이 팀 전체. 저장 경로 `data/uploads/{lecture\|code}/{YYYY-MM-DD}/{주제}/{filename}` |
+| POST | `/api/sources/folder` | 코드 폴더 업로드. `files` + `paths`(webkit 상대경로). 주제 칸을 비우면 Gemini가 분류하고, 키 없으면 경로 휴리스틱. 저장 `data/uploads/code/{날짜}/{주제}/{상대경로}` |
 | GET/POST | `/api/notes` | 노트 목록 / 빈 노트 생성. 노트 파일은 `data/notes/{user_id}/{YYYY-MM-DD}/` |
 | GET | `/api/notes/{id}` | 노트 상세 |
 | GET | `/api/jobs` | 업로드·노트 생성 작업 목록 |
@@ -67,7 +68,7 @@ npm run dev
 | POST | `/api/desk/move` | 노트/자료를 섹션으로 옮기거나 미분류로 |
 | POST | `/api/chat` | 학습 도우미. SSE 스트림. 본문 `{ user_id, message, history }` |
 
-자료 업로드는 노트를 만들지 않습니다. 노트는 대시보드나 개인 작업 공간에서 따로 만듭니다.
+자료 업로드는 노트를 만들지 않습니다. 노트는 대시보드나 개인 작업 공간에서 따로 만듭니다. 코드 폴더 업로드는 `GEMINI_API_KEY`가 있으면 파일 내용으로 주제를 나누고, 없으면 폴더/파일 이름 휴리스틱을 씁니다.
 
 챗봇을 쓰려면 프로젝트 루트 `.env`에 `GEMINI_API_KEY`를 넣으세요. 모델 이름은 기존 `GEMINI_MODEL`(기본 `gemini-3.7-flash`)입니다.
 

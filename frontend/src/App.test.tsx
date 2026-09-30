@@ -152,5 +152,9 @@ describe("StudyWeave UI", () => {
     expect(screen.getByRole("heading", { name: /10월 7일/ })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "주제별" }));
     expect(screen.getByRole("heading", { name: "에이전트" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "코드 올리기" }));
+    expect(screen.getByRole("button", { name: "폴더" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("코드 폴더")).toBeInTheDocument();
+    expect(screen.getByLabelText("수업 주제")).toHaveAttribute("placeholder", "비우면 파일 보고 자동 분류");
   });
 });

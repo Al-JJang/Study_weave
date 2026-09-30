@@ -25,7 +25,7 @@ export const MATERIAL_KINDS = {
     label: "코드",
     path: "/sources/code",
     emptyTitle: "아직 코드가 없습니다",
-    emptyDescription: "강사님이 보여 주신 코드를 올리면 팀이 같이 볼 수 있습니다.",
+    emptyDescription: "강사님이 보여 주신 코드 파일이나 폴더를 올리면 팀이 같이 볼 수 있습니다. 폴더는 AI가 주제로 나눠 저장합니다.",
     uploadLabel: "코드 올리기",
     searchLabel: "코드 검색",
     loadingLabel: "코드를 불러오는 중",
