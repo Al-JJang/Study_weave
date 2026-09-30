@@ -1,11 +1,33 @@
-"""verify → analyze 재시도 conditional edge 동작 확인."""
+"""verify → analyze 재시도 conditional edge / mock analyze 노드의 route 분기 확인."""
 
 from __future__ import annotations
 
+import pytest
+
 import config
-from graph.supervisor import route_after_verify
+from graph.supervisor import mock_analyze_node, route_after_verify
 from graph.verify import verify_node
 from schemas.quiz import QuizItem
+
+
+@pytest.mark.parametrize("route", ["pdf_only", "code_only", "both"])
+def test_mock_analyze_node_fills_flows_and_tables_for_every_route(route):
+    """flows/tables 는 PDF·코드 양쪽에서 나오므로 실제 analyze_node 와 같이 route 를 가리지 않는다."""
+    payload = mock_analyze_node({"route": route})
+    assert payload["flows"]
+    assert payload["tables"]
+
+
+def test_mock_analyze_node_keeps_route_specific_sections_empty():
+    pdf_only = mock_analyze_node({"route": "pdf_only"})
+    assert pdf_only["code_units"] == []
+    assert pdf_only["cross_references"] == []
+    assert pdf_only["practice_notes"] == []
+
+    code_only = mock_analyze_node({"route": "code_only"})
+    assert code_only["concepts"] == []
+    assert code_only["cross_references"] == []
+    assert code_only["practice_notes"] == []
 
 
 def _bad_state(retry_count: int) -> dict:

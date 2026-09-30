@@ -10,9 +10,6 @@ route 별:
 ※ AgentState 쪽 키 이름은 A 승인 후 확정 — 팀 공유 문서(docs/schema-migration-analysis.md) 참고.
 
 연동: concept/code_flow/flow_diagrams/reference_tables/cross_reference/practice_notes, graph/supervisor.py, config.get_chat_model
-
-WEAVE-22: concepts / code_units / cross_references 만 생성한다.
-flows / tables / practice_notes 는 아직 티켓이 없어 빈 리스트로 반환한다.
 """
 
 from __future__ import annotations
@@ -22,6 +19,9 @@ from schemas.state import AgentState
 from workers.analysis.code_flow import produce_code_units
 from workers.analysis.concept import produce_concepts
 from workers.analysis.cross_reference import produce_cross_references
+from workers.analysis.flow_diagrams import produce_flows
+from workers.analysis.practice_notes import produce_practice_notes
+from workers.analysis.reference_tables import produce_tables
 
 
 def build_evidence_context(chunks: list[RetrievedChunk]) -> str:
@@ -44,13 +44,14 @@ def analyze_node(state: AgentState) -> dict:
     cross_references = (
         produce_cross_references(chunks, concepts, code_units) if route == "both" else []
     )
+    practice_notes = produce_practice_notes(chunks) if route == "both" else []
 
     return {
         "status": "analyzed",
         "concepts": concepts,
         "code_units": code_units,
-        "flows": [],
-        "tables": [],
+        "flows": produce_flows(chunks),
+        "tables": produce_tables(chunks),
         "cross_references": cross_references,
-        "practice_notes": [],
+        "practice_notes": practice_notes,
     }

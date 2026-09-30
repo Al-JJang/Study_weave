@@ -54,15 +54,14 @@ def mock_analyze_node(state: AgentState) -> dict:
         "status": "analyzed",
         "concepts": [],
         "code_units": [],
-        "flows": [],
-        "tables": [],
+        # flows/tables 는 PDF·코드 어느 쪽에서도 나올 수 있어 route 와 무관하게 채운다.
+        "flows": MOCK_FLOWS,
+        "tables": MOCK_TABLES,
         "cross_references": [],
         "practice_notes": [],
     }
     if route in ("pdf_only", "both"):
         payload["concepts"] = MOCK_CONCEPTS
-        payload["flows"] = MOCK_FLOWS
-        payload["tables"] = MOCK_TABLES
     if route in ("code_only", "both"):
         payload["code_units"] = MOCK_CODE_UNITS
     if route == "both":

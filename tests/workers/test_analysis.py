@@ -201,25 +201,37 @@ def _stub_producers(monkeypatch) -> list[str]:
     monkeypatch.setattr(
         "workers.analysis.nodes.produce_cross_references", _record("cross_references", [])
     )
+    monkeypatch.setattr("workers.analysis.nodes.produce_flows", _record("flows", []))
+    monkeypatch.setattr("workers.analysis.nodes.produce_tables", _record("tables", []))
+    monkeypatch.setattr(
+        "workers.analysis.nodes.produce_practice_notes", _record("practice_notes", [])
+    )
     return called
 
 
-def test_analyze_node_pdf_only_runs_concepts_only(monkeypatch):
+def test_analyze_node_pdf_only_skips_code_and_both_only_producers(monkeypatch):
     called = _stub_producers(monkeypatch)
     analyze_node({"route": "pdf_only", "retrieved_chunks": []})
-    assert called == ["concepts"]
+    assert called == ["concepts", "flows", "tables"]
 
 
-def test_analyze_node_code_only_runs_code_units_only(monkeypatch):
+def test_analyze_node_code_only_skips_concepts_and_both_only_producers(monkeypatch):
     called = _stub_producers(monkeypatch)
     analyze_node({"route": "code_only", "retrieved_chunks": []})
-    assert called == ["code_units"]
+    assert called == ["code_units", "flows", "tables"]
 
 
-def test_analyze_node_both_runs_all_three(monkeypatch):
+def test_analyze_node_both_runs_every_producer(monkeypatch):
     called = _stub_producers(monkeypatch)
     analyze_node({"route": "both", "retrieved_chunks": []})
-    assert called == ["concepts", "code_units", "cross_references"]
+    assert called == [
+        "concepts",
+        "code_units",
+        "cross_references",
+        "practice_notes",
+        "flows",
+        "tables",
+    ]
 
 
 def test_analyze_node_always_returns_every_analysis_key(monkeypatch):
