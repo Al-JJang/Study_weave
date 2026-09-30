@@ -78,6 +78,11 @@ describe("StudyWeave UI", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "학습 도우미" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "섹션 추가" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "섹션 보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "탭" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "접기" }));
+    expect(screen.getByRole("button", { name: "접기" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /아직 안 나눔/ })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("option", { name: "동규" })).toHaveAttribute("aria-selected", "true");
   });
 
