@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export const TEAM_USERS = [
   { id: "seoyoung", name: "서영" },
@@ -13,7 +13,7 @@ export type TeamUser = (typeof TEAM_USERS)[number];
 export const DEFAULT_USER_ID: TeamUserId = "seoyoung";
 export const USER_STORAGE_KEY = "studyweave-user-id";
 
-function isTeamUserId(value: string | null): value is TeamUserId {
+export function isTeamUserId(value: string | null): value is TeamUserId {
   return TEAM_USERS.some((user) => user.id === value);
 }
 
@@ -39,22 +39,24 @@ const TeamUserContext = createContext<TeamUserContextValue | null>(null);
 export function TeamUserProvider({ children }: { children: ReactNode }) {
   const [userId, setUserIdState] = useState<TeamUserId>(readStoredUserId);
 
+  const setUserId = useCallback((id: TeamUserId) => {
+    setUserIdState(id);
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, id);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const value = useMemo<TeamUserContextValue>(() => {
     const user = TEAM_USERS.find((item) => item.id === userId) ?? TEAM_USERS[0];
     return {
       userId: user.id,
       user,
       users: TEAM_USERS,
-      setUserId: (id: TeamUserId) => {
-        setUserIdState(id);
-        try {
-          localStorage.setItem(USER_STORAGE_KEY, id);
-        } catch {
-          /* ignore */
-        }
-      },
+      setUserId,
     };
-  }, [userId]);
+  }, [setUserId, userId]);
 
   return <TeamUserContext.Provider value={value}>{children}</TeamUserContext.Provider>;
 }

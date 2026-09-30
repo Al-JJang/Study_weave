@@ -39,14 +39,15 @@ npm run dev
 
 | 경로 | 내용 |
 | --- | --- |
-| `/` | 대시보드. `StudyWeave AI` 제목과 한 줄 설명, 업로드/노트 카드, 수업 내용 검색, 최근 노트, 학습 도우미 챗봇 |
+| `/` | 공용 대시보드. `StudyWeave AI` 제목과 한 줄 설명, 업로드/노트 카드, 수업 내용 검색 |
+| `/u/:userId` | 개인 작업 공간. 섹션 추가·이름 변경·삭제, 노트/업로드를 섹션으로 옮기기, 학습 도우미 |
 | `/sources` | 선택한 사용자의 `user_id/YYYY-MM-DD` 폴더 트리 |
 | `/notes` | 선택한 사용자의 학습 노트 목록 |
 | `/notes/:id` | 노트 본문 |
 
-사이드바에서 서영·송주·새결·동규를 고릅니다. 선택은 `localStorage`에 남고, 노트/소스는 그 사용자만 보입니다.
+사이드바에서 서영·송주·새결·동규를 고르면 `/u/{user_id}` 개인 책상으로 이동합니다. 선택은 `localStorage`에 남고, 노트/소스는 그 사용자만 보입니다.
 
-챗봇은 선택한 사용자의 최근 노트를 컨텍스트로 Gemini와 대화합니다. 키는 `config.get_chat_model`이 쓰는 `GEMINI_API_KEY`입니다. 없으면 챗봇이 안내 문구를 보여 줍니다.
+챗봇(학습 도우미)은 개인 작업 공간에 있습니다. 키는 `config.get_chat_model`이 쓰는 `GEMINI_API_KEY`입니다. 없으면 챗봇이 안내 문구를 보여 줍니다.
 
 ## API
 
@@ -58,7 +59,12 @@ npm run dev
 | GET/POST | `/api/notes` | 노트 목록 / 빈 노트 생성. 노트 파일은 `data/notes/{user_id}/{YYYY-MM-DD}/` |
 | GET | `/api/notes/{id}` | 노트 상세 |
 | GET | `/api/jobs` | 업로드·노트 생성 작업 목록 |
-| POST | `/api/chat` | 대시보드 챗봇. SSE 스트림. 본문 `{ user_id, message, history }` |
+| GET | `/api/desk` | 개인 책상 (`user_id` 필수). `data/desks/{user_id}/desk.json` |
+| POST | `/api/desk/sections` | 섹션 추가 |
+| PATCH | `/api/desk/sections/{id}` | 섹션 이름 변경 |
+| DELETE | `/api/desk/sections/{id}` | 섹션 삭제 (항목은 미분류로) |
+| POST | `/api/desk/move` | 노트/소스를 섹션으로 옮기거나 미분류로 |
+| POST | `/api/chat` | 학습 도우미. SSE 스트림. 본문 `{ user_id, message, history }` |
 
 업로드 시 `graph.supervisor.run_pipeline(use_mock=True)` 를 호출해 보고, 실패하면 placeholder 노트를 만듭니다. 그래프 파일은 수정하지 않습니다.
 

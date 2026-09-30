@@ -1,6 +1,6 @@
 import { FileUp, LayoutDashboard, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTeamUser, type TeamUserId } from "@/lib/team";
 import { cn } from "@/lib/utils";
@@ -34,27 +34,37 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function UserPicker() {
+function UserPicker({ onNavigate }: { onNavigate?: () => void }) {
   const { userId, users, setUserId } = useTeamUser();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <div className="mt-6">
       <p className="mb-2 px-2 text-xs font-medium tracking-wide text-muted uppercase">사용자 선택</p>
       <div className="flex flex-col gap-1" role="listbox" aria-label="사용자 선택">
-        {users.map((user) => (
-          <button
-            key={user.id}
-            type="button"
-            role="option"
-            aria-selected={user.id === userId}
-            onClick={() => setUserId(user.id as TeamUserId)}
-            className={cn(
-              "rounded-2xl px-3 py-2.5 text-left text-sm font-medium",
-              user.id === userId ? "bg-lavender-soft text-lavender" : "text-muted hover:bg-cream",
-            )}
-          >
-            {user.name}
-          </button>
-        ))}
+        {users.map((user) => {
+          const selected = user.id === userId && location.pathname.startsWith(`/u/${user.id}`);
+          return (
+            <button
+              key={user.id}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onClick={() => {
+                setUserId(user.id as TeamUserId);
+                navigate(`/u/${user.id}`);
+                onNavigate?.();
+              }}
+              className={cn(
+                "rounded-2xl px-3 py-2.5 text-left text-sm font-medium",
+                selected ? "bg-lavender-soft text-lavender" : "text-muted hover:bg-cream",
+              )}
+            >
+              {user.name}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -88,7 +98,7 @@ export function AppShell() {
               </Button>
             </div>
             <NavItems onNavigate={() => setOpen(false)} />
-            <UserPicker />
+            <UserPicker onNavigate={() => setOpen(false)} />
             <UserChip />
           </aside>
         </div>

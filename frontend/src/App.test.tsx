@@ -6,17 +6,39 @@ import App from "@/App";
 import { EmptyState } from "@/components/Status";
 import { USER_STORAGE_KEY } from "@/lib/team";
 
+function jsonOk(data: unknown) {
+  return Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve(data),
+  });
+}
+
+const emptyDesk = {
+  user_id: "seoyoung",
+  user_name: "서영",
+  sections: [] as { id: string; title: string; items: unknown[] }[],
+  unfiled: [] as unknown[],
+};
+
 describe("StudyWeave UI", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.stubGlobal(
       "fetch",
-      vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([]),
-        }),
-      ),
+      vi.fn((input: RequestInfo) => {
+        const url = String(input);
+        if (url.includes("/api/desk")) {
+          const userId = new URL(url, "http://local.invalid").searchParams.get("user_id") ?? "seoyoung";
+          const names: Record<string, string> = {
+            seoyoung: "서영",
+            songju: "송주",
+            saegyeol: "새결",
+            donggyu: "동규",
+          };
+          return jsonOk({ ...emptyDesk, user_id: userId, user_name: names[userId] ?? userId });
+        }
+        return jsonOk([]);
+      }),
     );
   });
 
@@ -33,21 +55,15 @@ describe("StudyWeave UI", () => {
       screen.getByText("올린 수업 자료로 노트와 퀴즈를 만들고 검색합니다."),
     ).toBeInTheDocument();
     expect(screen.queryByText("안녕하세요")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "강의 진행 기록" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "학습 도우미" })).not.toBeInTheDocument();
     expect(screen.getByRole("listbox", { name: "사용자 선택" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "서영" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "송주" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "새결" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "동규" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "수업 내용 검색" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "수업 내용 검색" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "학습 도우미" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "소스 업로드" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "새 노트 생성" })).toBeInTheDocument();
     expect(await screen.findByText("아직 노트가 없습니다")).toBeInTheDocument();
   });
 
-  it("사용자 선택을 localStorage에 남긴다", async () => {
+  it("사용자 선택은 개인 작업 공간으로 이동한다", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -56,6 +72,12 @@ describe("StudyWeave UI", () => {
     );
     await user.click(screen.getByRole("option", { name: "동규" }));
     expect(localStorage.getItem(USER_STORAGE_KEY)).toBe("donggyu");
+    expect(await screen.findByRole("heading", { name: "동규의 작업 공간" })).toBeInTheDocument();
+    expect(
+      screen.queryByText("올린 수업 자료로 노트와 퀴즈를 만들고 검색합니다."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "학습 도우미" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "섹션 추가" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "동규" })).toHaveAttribute("aria-selected", "true");
   });
 

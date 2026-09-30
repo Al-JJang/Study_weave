@@ -74,3 +74,60 @@ class ChatRequest(BaseModel):
     user_id: str
     message: str
     history: list[ChatMessage] = Field(default_factory=list)
+
+
+DeskItemKind = Literal["note", "source"]
+
+
+class DeskItemRef(BaseModel):
+    kind: DeskItemKind
+    id: str
+
+
+class DeskSectionRecord(BaseModel):
+    id: str
+    title: str
+    items: list[DeskItemRef] = Field(default_factory=list)
+
+
+class DeskRecord(BaseModel):
+    user_id: str
+    sections: list[DeskSectionRecord] = Field(default_factory=list)
+
+
+class DeskItem(BaseModel):
+    kind: DeskItemKind
+    id: str
+    title: str
+    href: str
+    preview: str | None = None
+
+
+class DeskSection(BaseModel):
+    id: str
+    title: str
+    items: list[DeskItem] = Field(default_factory=list)
+
+
+class DeskResponse(BaseModel):
+    user_id: str
+    user_name: str
+    sections: list[DeskSection] = Field(default_factory=list)
+    unfiled: list[DeskItem] = Field(default_factory=list)
+
+
+class DeskSectionCreate(BaseModel):
+    user_id: str
+    title: str
+
+
+class DeskSectionRename(BaseModel):
+    user_id: str
+    title: str
+
+
+class DeskMoveRequest(BaseModel):
+    user_id: str
+    kind: DeskItemKind
+    item_id: str
+    section_id: str | None = None

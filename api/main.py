@@ -9,7 +9,12 @@
     POST /api/notes            빈 노트 생성
     GET  /api/notes/{note_id}
     GET  /api/jobs?user_id=
-    POST /api/chat             대시보드 챗봇 (SSE)
+    GET  /api/desk?user_id=
+    POST /api/desk/sections
+    PATCH /api/desk/sections/{section_id}
+    DELETE /api/desk/sections/{section_id}
+    POST /api/desk/move
+    POST /api/chat             학습 도우미 (SSE)
 """
 
 from __future__ import annotations
@@ -25,10 +30,15 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+import api.desk as desk
 import api.store as store
 from api.chat import iter_chat_sse, prepare_chat
 from api.models import (
     ChatRequest,
+    DeskMoveRequest,
+    DeskResponse,
+    DeskSectionCreate,
+    DeskSectionRename,
     HealthResponse,
     JobItem,
     NoteCreateRequest,
@@ -90,6 +100,7 @@ def create_app(*, seed: bool = True) -> FastAPI:
     async def lifespan(_application: FastAPI) -> AsyncIterator[None]:
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
         NOTES_DIR.mkdir(parents=True, exist_ok=True)
+        desk.DESK_DIR.mkdir(parents=True, exist_ok=True)
         store.reset(seed=seed)
         yield
 
@@ -274,6 +285,26 @@ def create_app(*, seed: bool = True) -> FastAPI:
     @application.get("/api/jobs", response_model=list[JobItem])
     def list_jobs(user_id: str | None = None) -> list[JobItem]:
         return store.list_jobs(user_id=require_user_id(user_id))
+
+    @application.get("/api/desk", response_model=DeskResponse)
+    def get_desk(user_id: str | None = None) -> DeskResponse:
+        return desk.build_response(require_user_id(user_id))
+
+    @application.post("/api/desk/sections", response_model=DeskResponse, status_code=201)
+    def create_desk_section(body: DeskSectionCreate) -> DeskResponse:
+        return desk.create_section(body)
+
+    @application.patch("/api/desk/sections/{section_id}", response_model=DeskResponse)
+    def rename_desk_section(section_id: str, body: DeskSectionRename) -> DeskResponse:
+        return desk.rename_section(section_id, body)
+
+    @application.delete("/api/desk/sections/{section_id}", response_model=DeskResponse)
+    def delete_desk_section(section_id: str, user_id: str | None = None) -> DeskResponse:
+        return desk.delete_section(section_id, user_id)
+
+    @application.post("/api/desk/move", response_model=DeskResponse)
+    def move_desk_item(body: DeskMoveRequest) -> DeskResponse:
+        return desk.move_item(body)
 
     @application.post("/api/chat")
     def chat(body: ChatRequest) -> StreamingResponse:

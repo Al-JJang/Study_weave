@@ -50,6 +50,27 @@ export interface HealthResponse {
   graph_available: boolean;
 }
 
+export interface DeskItem {
+  kind: "note" | "source";
+  id: string;
+  title: string;
+  href: string;
+  preview: string | null;
+}
+
+export interface DeskSection {
+  id: string;
+  title: string;
+  items: DeskItem[];
+}
+
+export interface DeskResponse {
+  user_id: string;
+  user_name: string;
+  sections: DeskSection[];
+  unfiled: DeskItem[];
+}
+
 export interface ChatTurn {
   role: "user" | "assistant";
   content: string;
@@ -95,6 +116,32 @@ export const api = {
     data.append("user_id", userId);
     return request<SourceItem>("/api/sources", { method: "POST", body: data });
   },
+  desk: (userId: string) => request<DeskResponse>(withUser("/api/desk", userId)),
+  createDeskSection: (userId: string, title: string) =>
+    request<DeskResponse>("/api/desk/sections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, title }),
+    }),
+  renameDeskSection: (userId: string, sectionId: string, title: string) =>
+    request<DeskResponse>(`/api/desk/sections/${sectionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, title }),
+    }),
+  deleteDeskSection: (userId: string, sectionId: string) =>
+    request<DeskResponse>(withUser(`/api/desk/sections/${sectionId}`, userId), { method: "DELETE" }),
+  moveDeskItem: (
+    userId: string,
+    kind: "note" | "source",
+    itemId: string,
+    sectionId: string | null,
+  ) =>
+    request<DeskResponse>("/api/desk/move", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, kind, item_id: itemId, section_id: sectionId }),
+    }),
   chat: async (
     userId: string,
     message: string,

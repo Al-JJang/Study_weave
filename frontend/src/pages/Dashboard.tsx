@@ -1,7 +1,6 @@
 import { FileStack, FileUp, NotebookPen, Search } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { DashboardChat } from "@/components/DashboardChat";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Status";
 import { UploadDialog } from "@/components/UploadDialog";
 import { Button } from "@/components/ui/button";
@@ -110,8 +109,7 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]">
-        <section>
+      <section className="mt-10">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">최근 노트</h2>
           <span className="text-xs text-muted">소스 {sources.length}개 · 노트 {notes.length}개</span>
@@ -151,8 +149,6 @@ export function DashboardPage() {
           </ul>
         ) : null}
       </section>
-        <DashboardChat key={userId} />
-      </div>
 
       <UploadDialog
         open={uploadOpen}

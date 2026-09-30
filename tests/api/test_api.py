@@ -18,6 +18,7 @@ from api.users import MISSING_USER_DETAIL
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setattr("api.main.UPLOAD_DIR", tmp_path / "uploads")
     monkeypatch.setattr("api.main.NOTES_DIR", tmp_path / "notes")
+    monkeypatch.setattr("api.desk.DESK_DIR", tmp_path / "desks")
     application = create_app(seed=False)
     with TestClient(application) as test_client:
         yield test_client
