@@ -19,7 +19,9 @@ class ConceptItem(BaseModel):
     summary: str
     formula: str | None = None  # LaTeX 또는 읽을 수 있는 일반식. content_type="formula" 청크 근거
     needs_verification: bool = False  # 근거 청크에 extraction_method="vision"이 섞여 있으면 True
-    related_code_refs: list[str] = Field(default_factory=list)
+    related_code_refs: list[str] = Field(
+        default_factory=list, description="CodeAnalysisItem.unit_name 을 가리킨다."
+    )
     source_chunk_ids: list[str] = Field(min_length=1)
 
 
@@ -49,8 +51,10 @@ class ReferenceTable(BaseModel):
 
 class CrossReferenceItem(BaseModel):
     ref_type: Literal["matched", "code_only", "concept_only"]
-    code_ref: str | None = None
-    concept_ref: str | None = None
+    code_ref: str | None = Field(
+        default=None, description="CodeAnalysisItem.unit_name 을 가리킨다."
+    )
+    concept_ref: str | None = Field(default=None, description="ConceptItem.concept_id 를 가리킨다.")
     explanation: str
     source_chunk_ids: list[str]
 
