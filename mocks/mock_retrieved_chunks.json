@@ -1,0 +1,47 @@
+[
+  {
+    "chunk_id": "req-demo-001:langgraph_agent_guide.pdf:chunk:0001",
+    "document_id": "req-demo-001:langgraph_agent_guide.pdf",
+    "source_type": "pdf",
+    "content": "LangGraph 의 Agent Loop 는 START → agent → tools → agent → ... → END 구조로 동작한다. tools 노드(ToolNode)가 만든 실행 결과(ToolMessage)가 다시 agent 노드로 들어가면, LLM 은 충분한 정보가 모였는지 스스로 판단해 다음 Tool 호출 여부를 결정한다. 무한 루프를 막기 위해 tool_rounds 같은 카운터와 MAX_TOOL_ROUNDS 상한을 함께 둔다.",
+    "chunk_index": 1,
+    "page_number": 2,
+    "start_line": null,
+    "end_line": null,
+    "distance": 0.12,
+    "vector_rank": 1,
+    "retrieval_sources": [
+      "vector"
+    ]
+  },
+  {
+    "chunk_id": "req-demo-001:agentEx4.py:chunk:0000",
+    "document_id": "req-demo-001:agentEx4.py",
+    "source_type": "code",
+    "content": "class AgentState(MessagesState):\n    tool_rounds: int\n\ndef agent_node(state: AgentState) -> dict:\n    response = model_with_tools.invoke([SYSTEM_PROMPT, *state['messages']])\n    rounds = state['tool_rounds'] + (1 if response.tool_calls else 0)\n    return {'messages': [response], 'tool_rounds': rounds}\n\ndef route_after_agent(state: AgentState) -> Literal['tools', 'end']:\n    last = state['messages'][-1]\n    if last.tool_calls and state['tool_rounds'] < MAX_TOOL_ROUNDS:\n        return 'tools'\n    return 'end'\n\nbuilder.add_conditional_edges('agent', route_after_agent, {'tools': 'tools', 'end': END})\nbuilder.add_edge('tools', 'agent')\n",
+    "chunk_index": 0,
+    "page_number": null,
+    "start_line": 1,
+    "end_line": 24,
+    "distance": 0.18,
+    "vector_rank": 2,
+    "retrieval_sources": [
+      "vector"
+    ]
+  },
+  {
+    "chunk_id": "req-demo-001:langgraph_agent_guide.pdf:chunk:0000",
+    "document_id": "req-demo-001:langgraph_agent_guide.pdf",
+    "source_type": "pdf",
+    "content": "LangChain 의 @tool 데코레이터는 일반 파이썬 함수를 LLM 이 호출 가능한 Tool 로 변환한다. 함수의 docstring 이 곧 Tool Description 이 되며, LLM 은 이 설명만 보고 Tool 사용 여부를 판단하므로 목적뿐 아니라 언제 사용하면 안 되는지까지 docstring 에 적어야 오남용을 막을 수 있다.",
+    "chunk_index": 0,
+    "page_number": 1,
+    "start_line": null,
+    "end_line": null,
+    "distance": 0.27,
+    "vector_rank": 3,
+    "retrieval_sources": [
+      "vector"
+    ]
+  }
+]

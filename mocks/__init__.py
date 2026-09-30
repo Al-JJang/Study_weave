@@ -12,7 +12,9 @@ from mocks.data import (
     MOCK_QUIZ_ITEMS,
     MOCK_REQUEST_ID,
     MOCK_RETRIEVED_CHUNKS,
+    MOCK_RETRIEVED_CHUNKS_JSON_PATH,
     MOCK_TABLES,
+    load_mock_retrieved_chunks_json,
 )
 
 __all__ = [
@@ -27,5 +29,7 @@ __all__ = [
     "MOCK_QUIZ_ITEMS",
     "MOCK_REQUEST_ID",
     "MOCK_RETRIEVED_CHUNKS",
+    "MOCK_RETRIEVED_CHUNKS_JSON_PATH",
     "MOCK_TABLES",
+    "load_mock_retrieved_chunks_json",
 ]

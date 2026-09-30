@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from schemas.analysis import (
     CodeAnalysisItem,
     ConceptItem,
@@ -105,6 +108,19 @@ MOCK_RETRIEVED_CHUNKS = [
         retrieval_sources=["vector"],
     ),
 ]
+
+MOCK_RETRIEVED_CHUNKS_JSON_PATH = Path(__file__).parent / "mock_retrieved_chunks.json"
+
+
+def load_mock_retrieved_chunks_json() -> list[RetrievedChunk]:
+    """mock_retrieved_chunks.json 을 읽어 RetrievedChunk 리스트로 검증한다.
+
+    Python import 없이 같은 샘플이 필요한 곳(수동 API 테스트, 다른 언어 클라이언트 등)을 위한
+    JSON 사본. 값은 MOCK_RETRIEVED_CHUNKS 와 항상 같게 유지한다(둘 중 하나만 바꾸지 말 것).
+    """
+    raw = json.loads(MOCK_RETRIEVED_CHUNKS_JSON_PATH.read_text(encoding="utf-8"))
+    return [RetrievedChunk.model_validate(item) for item in raw]
+
 
 MOCK_CONCEPTS = [
     ConceptItem(
