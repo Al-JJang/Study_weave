@@ -88,6 +88,27 @@ _REFERENCE_TABLE_TEMPLATE = """당신은 학습 자료를 비교·요약하는 �
 - 비교할 축이 없으면 표를 억지로 만들지 말고 비워 두세요.
 """
 
+_PRACTICE_NOTE_TEMPLATE = """당신은 초심자가 이 자료를 공부하며 실제로 저지르는 실수를 짚어 주는 어시스턴트입니다.
+
+아래는 PDF와 코드에서 추출된 청크들입니다. 각 청크는 `[chunk_id | 위치]` 헤더로 시작합니다.
+
+{evidence}
+
+지침:
+- note_type 은 다음 기준으로 판단하세요.
+  - mistake: 초심자가 흔히 틀리는 지점과 올바른 방법
+  - tip: 알아두면 실수를 예방할 수 있는 요령
+  - checklist_item: 직접 확인해 볼 수 있는 점검 항목. content 를 `~했는가?` 형태의 질문으로 쓰세요.
+- scope 는 실수의 주체로 구분하세요.
+  - learner_pattern: 자료를 배우는 사람이 저지르는 실수 (기본값)
+  - source_code_defect: 자료에 실린 코드 자체의 결함
+- content 는 자료 설명을 그대로 옮기지 말고, 학습자가 취할 행동이나 점검 항목으로 쓰세요.
+- caution 에는 그 실수를 했을 때 실제로 무엇이 잘못되는지 적으세요. 짚을 결과가 없으면 생략하세요.
+- 위 청크에 실제로 나온 개념·코드에 붙는 내용만 쓰세요. "변수명을 잘 지으세요" 같은 일반론은 쓰지 마세요.
+- source_chunk_ids 에는 반드시 위 헤더에 실제로 존재하는 chunk_id만 그대로 사용하세요.
+- 짚을 만한 지점이 없으면 억지로 만들지 말고 비워 두세요.
+"""
+
 
 def concept_prompt() -> PromptTemplate:
     return PromptTemplate.from_template(_CONCEPT_TEMPLATE)
@@ -110,4 +131,4 @@ def cross_reference_prompt() -> PromptTemplate:
 
 
 def practice_note_prompt() -> PromptTemplate:
-    raise NotImplementedError("C: practice_note_prompt — WEAVE-22 범위 밖")
+    return PromptTemplate.from_template(_PRACTICE_NOTE_TEMPLATE)

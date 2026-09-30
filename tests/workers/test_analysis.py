@@ -5,12 +5,19 @@ from __future__ import annotations
 from langchain_core.runnables import RunnableLambda
 
 import config
-from schemas.analysis import CodeAnalysisItem, ConceptItem, FlowDiagram, ReferenceTable
+from schemas.analysis import (
+    CodeAnalysisItem,
+    ConceptItem,
+    FlowDiagram,
+    PracticeNote,
+    ReferenceTable,
+)
 from schemas.files import RetrievedChunk
 from workers.analysis.code_flow import CodeUnitList, produce_code_units
 from workers.analysis.concept import ConceptList, produce_concepts
 from workers.analysis.flow_diagrams import FlowDiagramList, produce_flows
 from workers.analysis.nodes import analyze_node, build_evidence_context
+from workers.analysis.practice_notes import PracticeNoteList, produce_practice_notes
 from workers.analysis.reference_tables import ReferenceTableList, produce_tables
 
 
@@ -155,13 +162,27 @@ def test_produce_tables_drops_rows_that_do_not_match_columns(monkeypatch):
     assert [table.title for table in produce_tables([chunk])] == ["ok"]
 
 
-def test_produce_flows_and_tables_skip_llm_without_chunks(monkeypatch):
+def test_produce_practice_notes_drops_unknown_chunk_ids(monkeypatch):
+    chunk = _pdf_chunk("real")
+    payload = PracticeNoteList(
+        practice_notes=[
+            PracticeNote(note_type="tip", content="ok", source_chunk_ids=["real"]),
+            PracticeNote(note_type="mistake", content="hallucinated", source_chunk_ids=["made-up"]),
+        ]
+    )
+    monkeypatch.setattr(config, "get_chat_model", lambda **_: _FakeModel(payload))
+
+    assert [note.content for note in produce_practice_notes([chunk])] == ["ok"]
+
+
+def test_producers_skip_llm_without_chunks(monkeypatch):
     def _boom(**_):
         raise AssertionError("LLM 을 호출하면 안 된다")
 
     monkeypatch.setattr(config, "get_chat_model", _boom)
     assert produce_flows([]) == []
     assert produce_tables([]) == []
+    assert produce_practice_notes([]) == []
 
 
 def _stub_producers(monkeypatch) -> list[str]:
