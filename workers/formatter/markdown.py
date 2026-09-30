@@ -1,12 +1,15 @@
 """
-D — Markdown 본문 포맷터.
+D — Obsidian/Notion 호환 Markdown 포맷터.
 
-목차:
-    개념 정리 → 코드 분석 → 흐름도 → 참조표
+구성:
+    YAML Front Matter
+    → 개념 정리 → 코드 분석 → 흐름도 → 참조표
     → 이론-코드 연결 → Practice Notes → Quiz
 
-토글:
-    Quiz 정답 및 해설은 <details> 태그 사용
+표현:
+    - YAML Front Matter: request_id, route
+    - Callout: 근거 Chunk, 확인 필요, 주의사항
+    - Quiz 정답 및 해설: <details> 태그
 
 빈 섹션:
     config.EMPTY_SECTION_POLICY
@@ -21,6 +24,8 @@ D — Markdown 본문 포맷터.
 
 from __future__ import annotations
 
+import json
+
 import config
 from schemas.state import AgentState
 
@@ -28,13 +33,13 @@ from schemas.state import AgentState
 def _format_source_chunk_ids(
     source_chunk_ids: list[str],
 ) -> str:
-    """근거 Chunk ID 목록을 일반 Markdown 문자열로 변환합니다.
+    """근거 Chunk ID 목록을 callout으로 변환합니다.
 
     Args:
         source_chunk_ids: 항목의 근거 Chunk ID 목록.
 
     Returns:
-        근거 Chunk ID를 표시하는 Markdown 문자열.
+        근거 Chunk ID를 표시하는 Markdown callout 문자열.
     """
 
     if not source_chunk_ids:
@@ -42,7 +47,75 @@ def _format_source_chunk_ids(
 
     joined_ids = ", ".join(source_chunk_ids)
 
-    return f"**근거 Chunk:** {joined_ids}"
+    return _format_callout(
+        "NOTE",
+        "근거 Chunk",
+        joined_ids,
+    )
+
+
+def _yaml_quote(value: str) -> str:
+    """YAML Front Matter에 사용할 문자열을 안전하게 변환합니다.
+
+    Args:
+        value: YAML 값으로 출력할 문자열.
+
+    Returns:
+        따옴표와 특수문자가 처리된 YAML 문자열.
+    """
+
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _format_yaml(state: AgentState) -> str:
+    """AgentState의 기본 메타데이터를 YAML Front Matter로 변환합니다.
+
+    Args:
+        state: request_id와 route 등의 메타데이터가 포함된 AgentState.
+
+    Returns:
+        YAML Front Matter 문자열.
+    """
+
+    lines = ["---"]
+
+    request_id = state.get("request_id")
+    if request_id:
+        lines.append(f"request_id: {_yaml_quote(request_id)}")
+
+    route = state.get("route")
+    if route:
+        lines.append(f"route: {_yaml_quote(route)}")
+
+    lines.append("---")
+
+    return "\n".join(lines)
+
+
+def _format_callout(
+    callout_type: str,
+    title: str,
+    content: str,
+) -> str:
+    """Obsidian 형식의 Markdown callout을 생성합니다.
+
+    Args:
+        callout_type: NOTE, WARNING 등의 callout 유형.
+        title: callout 제목.
+        content: callout 본문.
+
+    Returns:
+        Markdown callout 문자열.
+    """
+
+    lines = [
+        f"> [!{callout_type}] {title}",
+    ]
+
+    for line in content.splitlines():
+        lines.append(f"> {line}")
+
+    return "\n".join(lines)
 
 
 def _append_section(
@@ -123,7 +196,11 @@ def _format_concepts(
             lines.extend(
                 [
                     "",
-                    "**확인 필요:** 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    _format_callout(
+                        "WARNING",
+                        "확인 필요",
+                        "이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    ),
                 ]
             )
 
@@ -217,7 +294,11 @@ def _format_flows(
             lines.extend(
                 [
                     "",
-                    "**확인 필요:** 이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    _format_callout(
+                        "WARNING",
+                        "확인 필요",
+                        "이미지/비전 기반 추출 결과가 포함되어 있습니다.",
+                    ),
                 ]
             )
 
@@ -394,7 +475,11 @@ def _format_practice_notes(
             lines.extend(
                 [
                     "",
-                    f"**주의:** {note.caution}",
+                    _format_callout(
+                        "WARNING",
+                        "주의",
+                        note.caution,
+                    ),
                 ]
             )
 
@@ -499,6 +584,7 @@ def format_markdown(
     """
 
     sections: list[str] = []
+    sections.append(_format_yaml(state))
 
     _append_section(
         sections,
