@@ -1,16 +1,19 @@
 import { FileStack, FileUp, NotebookPen, Search } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { DashboardChat } from "@/components/DashboardChat";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Status";
 import { UploadDialog } from "@/components/UploadDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api } from "@/lib/api";
+import { useTeamUser } from "@/lib/team";
 import { formatWhen } from "@/lib/utils";
 
 export function DashboardPage() {
   const { notes, sources, loading, error, refresh } = useWorkspace();
+  const { userId } = useTeamUser();
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -28,7 +31,7 @@ export function DashboardPage() {
   const createNote = async () => {
     setCreating(true);
     try {
-      const note = await api.createNote("새 노트");
+      const note = await api.createNote(userId, "새 노트");
       await refresh();
       navigate(`/notes/${note.id}`);
     } catch {
@@ -40,9 +43,12 @@ export function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="max-w-3xl bg-linear-to-r from-[#4f3ed4] to-[#9a7dff] bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
-        올린 수업 자료로 노트와 퀴즈를 만들고, 내용을 검색합니다.
+      <h1 className="bg-linear-to-r from-[#4f3ed4] to-[#9a7dff] bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
+        StudyWeave AI
       </h1>
+      <p className="mt-2 max-w-2xl text-sm text-muted">
+        올린 수업 자료로 노트와 퀴즈를 만들고 검색합니다.
+      </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <ActionCard
@@ -104,7 +110,8 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="mt-10">
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]">
+        <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">최근 노트</h2>
           <span className="text-xs text-muted">소스 {sources.length}개 · 노트 {notes.length}개</span>
@@ -144,6 +151,8 @@ export function DashboardPage() {
           </ul>
         ) : null}
       </section>
+        <DashboardChat key={userId} />
+      </div>
 
       <UploadDialog
         open={uploadOpen}

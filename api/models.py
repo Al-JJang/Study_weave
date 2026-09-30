@@ -18,6 +18,11 @@ class HealthResponse(BaseModel):
     graph_available: bool
 
 
+class TeamUser(BaseModel):
+    id: str
+    name: str
+
+
 class SourceItem(BaseModel):
     id: str
     filename: str
@@ -25,6 +30,9 @@ class SourceItem(BaseModel):
     size_bytes: int
     created_at: str
     status: RecordStatus
+    user_id: str
+    date_folder: str
+    relative_path: str
     note_id: str | None = None
 
 
@@ -36,10 +44,14 @@ class NoteItem(BaseModel):
     source_ids: list[str] = Field(default_factory=list)
     created_at: str
     status: RecordStatus
+    user_id: str
+    date_folder: str
+    relative_path: str
 
 
 class NoteCreateRequest(BaseModel):
     title: str | None = None
+    user_id: str | None = None
 
 
 class JobItem(BaseModel):
@@ -50,3 +62,15 @@ class JobItem(BaseModel):
     source_id: str | None = None
     note_id: str | None = None
     created_at: str
+    user_id: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    user_id: str
+    message: str
+    history: list[ChatMessage] = Field(default_factory=list)

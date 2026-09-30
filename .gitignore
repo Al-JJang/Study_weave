@@ -10,3 +10,4 @@ node_modules/
 frontend/dist/
 frontend/coverage/
 data/uploads/
+data/notes/

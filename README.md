@@ -39,22 +39,30 @@ npm run dev
 
 | 경로 | 내용 |
 | --- | --- |
-| `/` | 대시보드. 인사, StudyWeave가 학습에 도움이 되는 방식, 소스 업로드 / 새 노트 / 노트 열기 카드, 검색 |
-| `/sources` | 업로드한 소스 목록 (empty / loading / error) |
-| `/notes` | 학습 노트 목록 |
+| `/` | 대시보드. `StudyWeave AI` 제목과 한 줄 설명, 업로드/노트 카드, 수업 내용 검색, 최근 노트, 학습 도우미 챗봇 |
+| `/sources` | 선택한 사용자의 `user_id/YYYY-MM-DD` 폴더 트리 |
+| `/notes` | 선택한 사용자의 학습 노트 목록 |
 | `/notes/:id` | 노트 본문 |
+
+사이드바에서 서영·송주·새결·동규를 고릅니다. 선택은 `localStorage`에 남고, 노트/소스는 그 사용자만 보입니다.
+
+챗봇은 선택한 사용자의 최근 노트를 컨텍스트로 Gemini와 대화합니다. 키는 `config.get_chat_model`이 쓰는 `GEMINI_API_KEY`입니다. 없으면 챗봇이 안내 문구를 보여 줍니다.
 
 ## API
 
 | 메서드 | 경로 | 설명 |
 | --- | --- | --- |
 | GET | `/api/health` | 헬스체크. `graph_available` 포함 |
-| GET/POST | `/api/sources` | 소스 목록 / 파일 업로드 |
-| GET/POST | `/api/notes` | 노트 목록 / 빈 노트 생성 |
+| GET | `/api/users` | 팀원 목록 (서영, 송주, 새결, 동규) |
+| GET/POST | `/api/sources` | 소스 목록 / 파일 업로드 (`user_id` 필수). 저장 경로 `data/uploads/{user_id}/{YYYY-MM-DD}/{filename}` |
+| GET/POST | `/api/notes` | 노트 목록 / 빈 노트 생성. 노트 파일은 `data/notes/{user_id}/{YYYY-MM-DD}/` |
 | GET | `/api/notes/{id}` | 노트 상세 |
 | GET | `/api/jobs` | 업로드·노트 생성 작업 목록 |
+| POST | `/api/chat` | 대시보드 챗봇. SSE 스트림. 본문 `{ user_id, message, history }` |
 
 업로드 시 `graph.supervisor.run_pipeline(use_mock=True)` 를 호출해 보고, 실패하면 placeholder 노트를 만듭니다. 그래프 파일은 수정하지 않습니다.
+
+챗봇을 쓰려면 프로젝트 루트 `.env`에 `GEMINI_API_KEY`를 넣으세요. 모델 이름은 기존 `GEMINI_MODEL`(기본 `gemini-3.7-flash`)입니다.
 
 ## 테스트 · 린트
 

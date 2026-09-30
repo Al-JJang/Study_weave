@@ -30,6 +30,9 @@ def seed_demo() -> None:
         size_bytes=248_832,
         created_at="2026-09-28T09:00:00+00:00",
         status="ready",
+        user_id="seoyoung",
+        date_folder="2026-09-28",
+        relative_path="seoyoung/2026-09-28/langgraph_agent_guide.pdf",
         note_id="note-demo-001",
     )
     note = NoteItem(
@@ -48,6 +51,9 @@ def seed_demo() -> None:
         source_ids=["src-demo-pdf"],
         created_at="2026-09-28T09:05:00+00:00",
         status="ready",
+        user_id="seoyoung",
+        date_folder="2026-09-28",
+        relative_path="seoyoung/2026-09-28/Agent_Loop_학습_노트.md",
     )
     job = JobItem(
         id="job-demo-001",
@@ -57,6 +63,7 @@ def seed_demo() -> None:
         source_id=source.id,
         note_id=note.id,
         created_at="2026-09-28T09:05:00+00:00",
+        user_id="seoyoung",
     )
     with _lock:
         _sources[source.id] = source
@@ -64,9 +71,10 @@ def seed_demo() -> None:
         _jobs[job.id] = job
 
 
-def list_sources() -> list[SourceItem]:
+def list_sources(*, user_id: str) -> list[SourceItem]:
     with _lock:
-        return sorted(_sources.values(), key=lambda item: item.created_at, reverse=True)
+        items = [item for item in _sources.values() if item.user_id == user_id]
+        return sorted(items, key=lambda item: (item.date_folder, item.filename), reverse=True)
 
 
 def get_source(source_id: str) -> SourceItem | None:
@@ -80,9 +88,10 @@ def upsert_source(item: SourceItem) -> SourceItem:
         return item
 
 
-def list_notes() -> list[NoteItem]:
+def list_notes(*, user_id: str) -> list[NoteItem]:
     with _lock:
-        return sorted(_notes.values(), key=lambda item: item.created_at, reverse=True)
+        items = [item for item in _notes.values() if item.user_id == user_id]
+        return sorted(items, key=lambda item: item.created_at, reverse=True)
 
 
 def get_note(note_id: str) -> NoteItem | None:
@@ -96,9 +105,12 @@ def upsert_note(item: NoteItem) -> NoteItem:
         return item
 
 
-def list_jobs() -> list[JobItem]:
+def list_jobs(*, user_id: str | None = None) -> list[JobItem]:
     with _lock:
-        return sorted(_jobs.values(), key=lambda item: item.created_at, reverse=True)
+        items = list(_jobs.values())
+        if user_id is not None:
+            items = [item for item in items if item.user_id == user_id]
+        return sorted(items, key=lambda item: item.created_at, reverse=True)
 
 
 def upsert_job(item: JobItem) -> JobItem:

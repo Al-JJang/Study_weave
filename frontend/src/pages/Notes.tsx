@@ -4,17 +4,19 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/Status";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api } from "@/lib/api";
+import { useTeamUser } from "@/lib/team";
 import { formatWhen } from "@/lib/utils";
 
 export function NotesPage() {
   const { notes, loading, error, refresh } = useWorkspace();
+  const { userId } = useTeamUser();
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
 
   const createNote = async () => {
     setCreating(true);
     try {
-      const note = await api.createNote("새 노트");
+      const note = await api.createNote(userId, "새 노트");
       navigate(`/notes/${note.id}`);
     } catch {
       await refresh();

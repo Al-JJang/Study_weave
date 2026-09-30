@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { api, type SourceItem } from "@/lib/api";
+import { useTeamUser } from "@/lib/team";
 
 export function UploadDialog({
   open,
@@ -12,6 +13,7 @@ export function UploadDialog({
   onOpenChange: (open: boolean) => void;
   onUploaded: (source: SourceItem) => void;
 }) {
+  const { userId } = useTeamUser();
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +27,7 @@ export function UploadDialog({
     setBusy(true);
     setError(null);
     try {
-      const source = await api.uploadSource(file);
+      const source = await api.uploadSource(userId, file);
       setFile(null);
       onOpenChange(false);
       onUploaded(source);

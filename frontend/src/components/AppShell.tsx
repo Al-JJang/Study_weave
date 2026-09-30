@@ -1,24 +1,18 @@
-import {
-  FileUp,
-  LayoutDashboard,
-  Menu,
-  NotebookPen,
-  X,
-} from "lucide-react";
+import { FileUp, LayoutDashboard, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useTeamUser, type TeamUserId } from "@/lib/team";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "대시보드", icon: LayoutDashboard, end: true },
   { to: "/sources", label: "소스", icon: FileUp, end: false },
-  { to: "/notes", label: "강의 진행 기록", icon: NotebookPen, end: false },
 ];
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <nav className="flex flex-1 flex-col gap-1">
+    <nav className="flex flex-col gap-1">
       {nav.map((item) => (
         <NavLink
           key={item.to}
@@ -40,6 +34,32 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function UserPicker() {
+  const { userId, users, setUserId } = useTeamUser();
+  return (
+    <div className="mt-6">
+      <p className="mb-2 px-2 text-xs font-medium tracking-wide text-muted uppercase">사용자 선택</p>
+      <div className="flex flex-col gap-1" role="listbox" aria-label="사용자 선택">
+        {users.map((user) => (
+          <button
+            key={user.id}
+            type="button"
+            role="option"
+            aria-selected={user.id === userId}
+            onClick={() => setUserId(user.id as TeamUserId)}
+            className={cn(
+              "rounded-2xl px-3 py-2.5 text-left text-sm font-medium",
+              user.id === userId ? "bg-lavender-soft text-lavender" : "text-muted hover:bg-cream",
+            )}
+          >
+            {user.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AppShell() {
   const [open, setOpen] = useState(false);
 
@@ -48,6 +68,7 @@ export function AppShell() {
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#efeaf6] bg-white px-4 py-5 md:flex">
         <Brand />
         <NavItems />
+        <UserPicker />
         <UserChip />
       </aside>
 
@@ -67,6 +88,7 @@ export function AppShell() {
               </Button>
             </div>
             <NavItems onNavigate={() => setOpen(false)} />
+            <UserPicker />
             <UserChip />
           </aside>
         </div>
@@ -109,9 +131,10 @@ function BrandMark() {
 }
 
 function UserChip() {
+  const { user } = useTeamUser();
   return (
     <div className="mt-auto rounded-2xl bg-cream px-3 py-3 text-sm">
-      <p className="font-medium">팀원</p>
+      <p className="font-medium">{user.name}</p>
       <p className="text-xs text-muted">팀 내부 학습 도구</p>
     </div>
   );
