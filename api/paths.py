@@ -15,6 +15,39 @@ def today_folder() -> str:
     return datetime.now(KST).date().isoformat()
 
 
+def parse_study_date(raw: str | None) -> str:
+    text = (raw or "").strip()
+    if not text:
+        return today_folder()
+    try:
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+            datetime.strptime(text, "%Y-%m-%d")
+            return text
+        match = re.fullmatch(r"(\d{1,2})[./-](\d{1,2})", text)
+        if match:
+            month = int(match.group(1))
+            day = int(match.group(2))
+            return datetime(2026, month, day, tzinfo=KST).date().isoformat()
+    except ValueError as exc:
+        raise ValueError("날짜는 YYYY-MM-DD 또는 7/21 형식으로 넣어 주세요.") from exc
+    raise ValueError("날짜는 YYYY-MM-DD 또는 7/21 형식으로 넣어 주세요.")
+
+
+def normalize_topic(raw: str | None) -> str:
+    text = (raw or "").strip()
+    if not text:
+        return "미분류"
+    cleaned = _UNSAFE.sub(" ", text)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()[:40]
+    return cleaned or "미분류"
+
+
+def topic_slug(topic: str) -> str:
+    cleaned = _UNSAFE.sub("_", topic.strip())
+    cleaned = re.sub(r"_+", "_", cleaned).strip("._")[:40]
+    return cleaned or "unfiled"
+
+
 def sanitize_filename(original: str) -> str:
     name = Path(original.replace("\\", "/")).name
     stem = Path(name).stem

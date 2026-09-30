@@ -92,4 +92,44 @@ describe("StudyWeave UI", () => {
     );
     expect(screen.getByText("아직 소스가 없습니다")).toBeInTheDocument();
   });
+
+  it("소스 탭에서 날짜와 주제로 분류한다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo) => {
+        const url = String(input);
+        if (url.includes("/api/sources")) {
+          return jsonOk([
+            {
+              id: "src-1",
+              filename: "agent.py",
+              source_type: "code",
+              size_bytes: 12,
+              created_at: "2026-07-21T10:00:00+00:00",
+              status: "ready",
+              user_id: "seoyoung",
+              date_folder: "2026-07-21",
+              topic: "에이전트",
+              relative_path: "seoyoung/2026-07-21/에이전트/agent.py",
+              note_id: null,
+            },
+          ]);
+        }
+        return jsonOk([]);
+      }),
+    );
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/sources"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("agent.py")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /7월 21일/ })).toBeInTheDocument();
+    expect(screen.getByText("에이전트")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "날짜별" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "주제별" }));
+    expect(screen.getByRole("heading", { name: "에이전트" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "7월" })).toBeInTheDocument();
+  });
 });

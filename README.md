@@ -41,7 +41,7 @@ npm run dev
 | --- | --- |
 | `/` | 공용 대시보드. `StudyWeave AI` 제목과 한 줄 설명, 업로드/노트 카드, 수업 내용 검색 |
 | `/u/:userId` | 개인 작업 공간. 섹션 추가·이름 변경·삭제, 노트/업로드를 섹션으로 옮기기, 학습 도우미 |
-| `/sources` | 선택한 사용자의 `user_id/YYYY-MM-DD` 폴더 트리 |
+| `/sources` | 선택한 사용자의 소스를 7/21–9/30 날짜·주제로 분류 |
 | `/notes` | 선택한 사용자의 학습 노트 목록 |
 | `/notes/:id` | 노트 본문 |
 
@@ -55,7 +55,7 @@ npm run dev
 | --- | --- | --- |
 | GET | `/api/health` | 헬스체크. `graph_available` 포함 |
 | GET | `/api/users` | 팀원 목록 (서영, 송주, 새결, 동규) |
-| GET/POST | `/api/sources` | 소스 목록 / 파일 업로드 (`user_id` 필수). 저장 경로 `data/uploads/{user_id}/{YYYY-MM-DD}/{filename}` |
+| GET/POST | `/api/sources` | 소스 목록 / 파일 업로드 (`user_id`, `topic`, `study_date`). 저장 경로 `data/uploads/{user_id}/{YYYY-MM-DD}/{주제}/{filename}` |
 | GET/POST | `/api/notes` | 노트 목록 / 빈 노트 생성. 노트 파일은 `data/notes/{user_id}/{YYYY-MM-DD}/` |
 | GET | `/api/notes/{id}` | 노트 상세 |
 | GET | `/api/jobs` | 업로드·노트 생성 작업 목록 |

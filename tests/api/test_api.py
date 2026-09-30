@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import create_app
-from api.paths import sanitize_filename
+from api.paths import parse_study_date, sanitize_filename
 from api.users import MISSING_USER_DETAIL
 
 
@@ -70,6 +70,8 @@ def test_upload_rejects_missing_user(client: TestClient) -> None:
 def test_sanitize_filename_strips_paths() -> None:
     assert sanitize_filename("../secret.pdf") == "secret.pdf"
     assert sanitize_filename("my file (1).PY") == "my_file_1.py"
+    assert parse_study_date("7/21") == "2026-07-21"
+    assert parse_study_date("2026-09-30") == "2026-09-30"
 
 
 def test_upload_creates_user_date_folder(client: TestClient, tmp_path: Path) -> None:
@@ -86,7 +88,8 @@ def test_upload_creates_user_date_folder(client: TestClient, tmp_path: Path) -> 
     assert source["user_id"] == "donggyu"
     assert source["note_id"]
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", source["date_folder"])
-    assert source["relative_path"] == f"donggyu/{source['date_folder']}/agentEx4.py"
+    assert source["relative_path"] == f"donggyu/{source['date_folder']}/미분류/{source['filename']}"
+    assert source["topic"] == "미분류"
     saved = tmp_path / "uploads" / source["relative_path"]
     assert saved.is_file()
     assert saved.read_bytes() == b"print('hello')\n"
@@ -117,6 +120,29 @@ def test_same_day_duplicate_filename_gets_suffix(client: TestClient) -> None:
     assert first.json()["filename"] == "slide.pdf"
     assert second.json()["filename"] == "slide-2.pdf"
     assert first.json()["date_folder"] == second.json()["date_folder"]
+
+
+def test_upload_classifies_by_topic_and_date(client: TestClient, tmp_path: Path) -> None:
+    response = client.post(
+        "/api/sources",
+        data={"user_id": "donggyu", "topic": "LangGraph", "study_date": "7/21"},
+        files={"file": ("agentEx4.py", b"print('loop')\n", "text/x-python")},
+    )
+    assert response.status_code == 201
+    source = response.json()
+    assert source["topic"] == "LangGraph"
+    assert source["date_folder"] == "2026-07-21"
+    assert source["relative_path"] == "donggyu/2026-07-21/LangGraph/agentEx4.py"
+    assert (tmp_path / "uploads" / source["relative_path"]).is_file()
+
+
+def test_upload_rejects_bad_date(client: TestClient) -> None:
+    response = client.post(
+        "/api/sources",
+        data={"user_id": "donggyu", "topic": "RAG", "study_date": "어제"},
+        files={"file": ("notes.txt", b"hi\n", "text/plain")},
+    )
+    assert response.status_code == 400
 
 
 def test_create_blank_note_in_user_folder(client: TestClient, tmp_path: Path) -> None:

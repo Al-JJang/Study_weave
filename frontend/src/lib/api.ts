@@ -17,6 +17,7 @@ export interface SourceItem {
   user_id: string;
   date_folder: string;
   relative_path: string;
+  topic: string;
   note_id: string | null;
 }
 
@@ -110,10 +111,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title ?? "새 노트", user_id: userId }),
     }),
-  uploadSource: async (userId: string, file: File) => {
+  uploadSource: async (userId: string, file: File, meta?: { topic?: string; studyDate?: string }) => {
     const data = new FormData();
     data.append("file", file);
     data.append("user_id", userId);
+    if (meta?.topic) data.append("topic", meta.topic);
+    if (meta?.studyDate) data.append("study_date", meta.studyDate);
     return request<SourceItem>("/api/sources", { method: "POST", body: data });
   },
   desk: (userId: string) => request<DeskResponse>(withUser("/api/desk", userId)),

@@ -33,6 +33,7 @@ class SourceItem(BaseModel):
     user_id: str
     date_folder: str
     relative_path: str
+    topic: str = "미분류"
     note_id: str | None = None
 
 

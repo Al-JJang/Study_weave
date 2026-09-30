@@ -157,6 +157,7 @@ export function DashboardPage() {
           void refresh();
           if (source.note_id) navigate(`/notes/${source.note_id}`);
         }}
+        topics={[...new Set(sources.map((source) => source.topic).filter(Boolean))]}
       />
     </div>
   );

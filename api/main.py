@@ -47,7 +47,14 @@ from api.models import (
     SourceKind,
     TeamUser,
 )
-from api.paths import sanitize_filename, today_folder, unique_path
+from api.paths import (
+    normalize_topic,
+    parse_study_date,
+    sanitize_filename,
+    today_folder,
+    topic_slug,
+    unique_path,
+)
 from api.pipeline import graph_available, try_mock_markdown
 from api.users import list_team_users, require_user_id
 from config import DATA_DIR
@@ -132,6 +139,8 @@ def create_app(*, seed: bool = True) -> FastAPI:
     async def upload_source(
         file: Annotated[UploadFile, File()],
         user_id: Annotated[str | None, Form()] = None,
+        topic: Annotated[str | None, Form()] = None,
+        study_date: Annotated[str | None, Form()] = None,
     ) -> SourceItem:
         uid = require_user_id(user_id)
         filename = (file.filename or "").strip()
@@ -145,11 +154,16 @@ def create_app(*, seed: bool = True) -> FastAPI:
             raise HTTPException(status_code=413, detail="파일 크기는 20MB 이하여야 합니다.")
 
         source_id = f"src-{uuid.uuid4().hex[:10]}"
-        date_folder = today_folder()
+        try:
+            date_folder = parse_study_date(study_date)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        topic_name = normalize_topic(topic)
+        slug = topic_slug(topic_name)
         safe_name = sanitize_filename(filename)
-        dest = unique_path(UPLOAD_DIR / uid / date_folder, safe_name)
+        dest = unique_path(UPLOAD_DIR / uid / date_folder / slug, safe_name)
         dest.write_bytes(payload)
-        relative_path = f"{uid}/{date_folder}/{dest.name}"
+        relative_path = f"{uid}/{date_folder}/{slug}/{dest.name}"
 
         created = _now()
         source = SourceItem(
@@ -162,6 +176,7 @@ def create_app(*, seed: bool = True) -> FastAPI:
             user_id=uid,
             date_folder=date_folder,
             relative_path=relative_path,
+            topic=topic_name,
         )
         store.upsert_source(source)
 

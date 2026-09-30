@@ -32,7 +32,8 @@ def seed_demo() -> None:
         status="ready",
         user_id="seoyoung",
         date_folder="2026-09-28",
-        relative_path="seoyoung/2026-09-28/langgraph_agent_guide.pdf",
+        relative_path="seoyoung/2026-09-28/LangGraph/langgraph_agent_guide.pdf",
+        topic="LangGraph",
         note_id="note-demo-001",
     )
     note = NoteItem(
@@ -74,7 +75,9 @@ def seed_demo() -> None:
 def list_sources(*, user_id: str) -> list[SourceItem]:
     with _lock:
         items = [item for item in _sources.values() if item.user_id == user_id]
-        return sorted(items, key=lambda item: (item.date_folder, item.filename), reverse=True)
+        return sorted(
+            items, key=lambda item: (item.date_folder, item.topic, item.filename), reverse=True
+        )
 
 
 def get_source(source_id: str) -> SourceItem | None:
