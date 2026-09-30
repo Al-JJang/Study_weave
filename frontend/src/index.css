@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --color-cream: #f4f0ea;
+  --color-ink: #2b2546;
+  --color-muted: #7b7393;
+  --color-lavender: #6d5ce8;
+  --color-lavender-soft: #ece7ff;
+  --color-card: #ffffff;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.dot-grid {
+  background-image: radial-gradient(#d8d2ea 1px, transparent 1px);
+  background-size: 14px 14px;
+}
