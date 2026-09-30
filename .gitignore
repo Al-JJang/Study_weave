@@ -5,3 +5,10 @@ __pycache__/
 .DS_Store
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+node_modules/
+frontend/dist/
+frontend/coverage/
+data/uploads/
+data/notes/
+data/desks/

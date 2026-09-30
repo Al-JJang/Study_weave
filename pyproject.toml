@@ -1,10 +1,11 @@
 [project]
 name = "study-weave"
 version = "0.1.0"
-description = "Add your description here"
+description = "StudyWeave AI — 수업 자료로 학습 노트를 만드는 팀 도구"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.142.1",
     "google-genai>=1.0.0",
     "langchain>=0.3.0",
     "langchain-core>=0.3.0",
@@ -18,12 +19,15 @@ dependencies = [
     "pydantic>=2.0.0",
     "pypdf>=5.0.0",
     "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.32",
     "reportlab>=4.2.0",
     "streamlit>=1.38.0",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
     "ruff>=0.16.6",
 ]
