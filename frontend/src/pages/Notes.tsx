@@ -30,7 +30,7 @@ export function NotesPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">강의 진행 기록</h1>
-          <p className="mt-1 text-sm text-muted">소스에서 만든 학습 노트와 직접 만든 빈 노트입니다.</p>
+          <p className="mt-1 text-sm text-muted">각자 정리하는 학습 노트입니다. 강사님 자료는 강의자료·코드 탭에 있습니다.</p>
         </div>
         <Button onClick={() => void createNote()} disabled={creating}>
           {creating ? "만드는 중…" : "새 노트 생성"}
@@ -45,7 +45,7 @@ export function NotesPage() {
         {!loading && !error && notes.length === 0 ? (
           <EmptyState
             title="아직 노트가 없습니다"
-            description="새 노트를 만들거나 소스를 업로드해 보세요."
+            description="새 노트를 만들면 여기에 나타납니다."
             action={<Button onClick={() => void createNote()}>새 노트 생성</Button>}
           />
         ) : null}

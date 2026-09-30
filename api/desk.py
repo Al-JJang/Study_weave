@@ -66,13 +66,14 @@ def _as_item(kind: str, item_id: str, user_id: str) -> DeskItem | None:
             preview=note.preview,
         )
     source = store.get_source(item_id)
-    if source is None or source.user_id != user_id:
+    if source is None:
         return None
+    href = "/sources/code" if source.material_kind == "code" else "/sources/lectures"
     return DeskItem(
         kind="source",
         id=source.id,
         title=source.filename,
-        href="/sources",
+        href=href,
         preview=source.relative_path,
     )
 
@@ -118,11 +119,6 @@ def build_response(user_id: str) -> DeskResponse:
     for note in store.list_notes(user_id=uid):
         if ("note", note.id) not in placed:
             item = _as_item("note", note.id, uid)
-            if item:
-                unfiled.append(item)
-    for source in store.list_sources(user_id=uid):
-        if ("source", source.id) not in placed:
-            item = _as_item("source", source.id, uid)
             if item:
                 unfiled.append(item)
 
@@ -181,8 +177,11 @@ def delete_section(section_id: str, user_id: str | None) -> DeskResponse:
 
 def move_item(body: DeskMoveRequest) -> DeskResponse:
     uid = require_user_id(body.user_id)
-    if _as_item(body.kind, body.item_id, uid) is None:
-        raise HTTPException(status_code=404, detail="이 사용자의 노트나 소스가 아닙니다.")
+    if body.kind == "note":
+        if _as_item(body.kind, body.item_id, uid) is None:
+            raise HTTPException(status_code=404, detail="이 사용자의 노트가 아닙니다.")
+    elif store.get_source(body.item_id) is None:
+        raise HTTPException(status_code=404, detail="자료를 찾을 수 없습니다.")
     ref = DeskItemRef(kind=body.kind, id=body.item_id)
     with _lock:
         record = load_record(uid)

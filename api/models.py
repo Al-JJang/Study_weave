@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 SourceKind = Literal["pdf", "code", "text"]
+MaterialKind = Literal["lecture", "code"]
 RecordStatus = Literal["uploaded", "processing", "ready", "error", "draft"]
 JobStatus = Literal["queued", "running", "done", "error"]
 JobKind = Literal["upload", "note"]
@@ -27,6 +28,7 @@ class SourceItem(BaseModel):
     id: str
     filename: str
     source_type: SourceKind
+    material_kind: MaterialKind = "lecture"
     size_bytes: int
     created_at: str
     status: RecordStatus

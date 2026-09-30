@@ -1,4 +1,5 @@
 export type SourceKind = "pdf" | "code" | "text";
+export type MaterialKind = "lecture" | "code";
 export type RecordStatus = "uploaded" | "processing" | "ready" | "error" | "draft";
 export type JobStatus = "queued" | "running" | "done" | "error";
 
@@ -11,6 +12,7 @@ export interface SourceItem {
   id: string;
   filename: string;
   source_type: SourceKind;
+  material_kind: MaterialKind;
   size_bytes: number;
   created_at: string;
   status: RecordStatus;
@@ -101,7 +103,10 @@ function withUser(path: string, userId: string) {
 export const api = {
   health: () => request<HealthResponse>("/api/health"),
   users: () => request<TeamUser[]>("/api/users"),
-  sources: (userId: string) => request<SourceItem[]>(withUser("/api/sources", userId)),
+  sources: (kind?: MaterialKind) => {
+    const query = kind ? `?kind=${kind}` : "";
+    return request<SourceItem[]>(`/api/sources${query}`);
+  },
   notes: (userId: string) => request<NoteItem[]>(withUser("/api/notes", userId)),
   note: (id: string) => request<NoteItem>(`/api/notes/${id}`),
   jobs: (userId: string) => request<JobItem[]>(withUser("/api/jobs", userId)),
@@ -111,12 +116,17 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title ?? "새 노트", user_id: userId }),
     }),
-  uploadSource: async (userId: string, file: File, meta?: { topic?: string; studyDate?: string }) => {
+  uploadSource: async (
+    userId: string,
+    file: File,
+    meta?: { topic?: string; studyDate?: string; materialKind?: MaterialKind },
+  ) => {
     const data = new FormData();
     data.append("file", file);
     data.append("user_id", userId);
     if (meta?.topic) data.append("topic", meta.topic);
     if (meta?.studyDate) data.append("study_date", meta.studyDate);
+    if (meta?.materialKind) data.append("material_kind", meta.materialKind);
     return request<SourceItem>("/api/sources", { method: "POST", body: data });
   },
   desk: (userId: string) => request<DeskResponse>(withUser("/api/desk", userId)),

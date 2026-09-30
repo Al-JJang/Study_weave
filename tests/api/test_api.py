@@ -1,4 +1,4 @@
-"""FastAPI 뼈대 — 헬스체크, 사용자별 업로드, 노트, 챗봇."""
+"""FastAPI 뼈대 — 헬스체크, 공유 자료 업로드, 개인 노트, 챗봇."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import create_app
-from api.paths import parse_study_date, sanitize_filename
+from api.paths import parse_material_kind, parse_study_date, sanitize_filename
 from api.users import MISSING_USER_DETAIL
 
 
@@ -39,13 +39,13 @@ def test_users_are_the_four_teammates(client: TestClient) -> None:
 
 
 def test_lists_require_user_id(client: TestClient) -> None:
-    response = client.get("/api/sources")
+    response = client.get("/api/notes")
     assert response.status_code == 400
     assert response.json()["detail"] == MISSING_USER_DETAIL
 
 
 def test_lists_start_empty(client: TestClient) -> None:
-    assert client.get("/api/sources", params={"user_id": "donggyu"}).json() == []
+    assert client.get("/api/sources").json() == []
     assert client.get("/api/notes", params={"user_id": "donggyu"}).json() == []
     assert client.get("/api/jobs", params={"user_id": "donggyu"}).json() == []
 
@@ -72,9 +72,13 @@ def test_sanitize_filename_strips_paths() -> None:
     assert sanitize_filename("my file (1).PY") == "my_file_1.py"
     assert parse_study_date("7/21") == "2026-07-21"
     assert parse_study_date("2026-09-30") == "2026-09-30"
+    assert parse_study_date("10/7") == "2026-10-07"
+    assert parse_material_kind(None, filename="agent.py") == "code"
+    assert parse_material_kind(None, filename="slide.pdf") == "lecture"
+    assert parse_material_kind("lecture", filename="agent.py") == "lecture"
 
 
-def test_upload_creates_user_date_folder(client: TestClient, tmp_path: Path) -> None:
+def test_upload_creates_shared_library_folder(client: TestClient, tmp_path: Path) -> None:
     response = client.post(
         "/api/sources",
         data={"user_id": "donggyu"},
@@ -84,23 +88,26 @@ def test_upload_creates_user_date_folder(client: TestClient, tmp_path: Path) -> 
     source = response.json()
     assert source["filename"] == "agentEx4.py"
     assert source["source_type"] == "code"
+    assert source["material_kind"] == "code"
     assert source["status"] == "ready"
     assert source["user_id"] == "donggyu"
-    assert source["note_id"]
+    assert source["note_id"] is None
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", source["date_folder"])
-    assert source["relative_path"] == f"donggyu/{source['date_folder']}/미분류/{source['filename']}"
+    assert source["relative_path"] == f"code/{source['date_folder']}/미분류/{source['filename']}"
     assert source["topic"] == "미분류"
     saved = tmp_path / "uploads" / source["relative_path"]
     assert saved.is_file()
     assert saved.read_bytes() == b"print('hello')\n"
 
     notes = client.get("/api/notes", params={"user_id": "donggyu"}).json()
-    assert len(notes) == 1
-    note_path = tmp_path / "notes" / notes[0]["relative_path"]
-    assert note_path.is_file()
+    assert notes == []
 
-    other = client.get("/api/notes", params={"user_id": "seoyoung"}).json()
-    assert other == []
+    shared = client.get("/api/sources").json()
+    assert len(shared) == 1
+    assert shared[0]["filename"] == "agentEx4.py"
+    by_kind = client.get("/api/sources", params={"kind": "code"}).json()
+    assert len(by_kind) == 1
+    assert client.get("/api/sources", params={"kind": "lecture"}).json() == []
 
 
 def test_same_day_duplicate_filename_gets_suffix(client: TestClient) -> None:
@@ -132,8 +139,32 @@ def test_upload_classifies_by_topic_and_date(client: TestClient, tmp_path: Path)
     source = response.json()
     assert source["topic"] == "LangGraph"
     assert source["date_folder"] == "2026-07-21"
-    assert source["relative_path"] == "donggyu/2026-07-21/LangGraph/agentEx4.py"
+    assert source["relative_path"] == "code/2026-07-21/LangGraph/agentEx4.py"
+    assert source["material_kind"] == "code"
     assert (tmp_path / "uploads" / source["relative_path"]).is_file()
+
+
+def test_upload_lecture_material_uses_lecture_folder(client: TestClient, tmp_path: Path) -> None:
+    response = client.post(
+        "/api/sources",
+        data={
+            "user_id": "seoyoung",
+            "topic": "RAG",
+            "study_date": "10/7",
+            "material_kind": "lecture",
+        },
+        files={"file": ("week1.pdf", b"%PDF-1.4 demo", "application/pdf")},
+    )
+    assert response.status_code == 201
+    source = response.json()
+    assert source["material_kind"] == "lecture"
+    assert source["date_folder"] == "2026-10-07"
+    assert source["note_id"] is None
+    assert source["relative_path"] == "lecture/2026-10-07/RAG/week1.pdf"
+    assert (tmp_path / "uploads" / source["relative_path"]).is_file()
+    assert (
+        client.get("/api/sources", params={"kind": "lecture"}).json()[0]["filename"] == "week1.pdf"
+    )
 
 
 def test_upload_rejects_bad_date(client: TestClient) -> None:
@@ -162,13 +193,17 @@ def test_missing_note_is_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_seeded_app_has_demo_rows_for_seoyoung_only() -> None:
+def test_seeded_app_has_shared_materials_and_personal_notes() -> None:
     application = create_app(seed=True)
     with TestClient(application) as test_client:
-        assert test_client.get("/api/sources", params={"user_id": "seoyoung"}).json()
+        sources = test_client.get("/api/sources").json()
+        kinds = {row["material_kind"] for row in sources}
+        assert kinds == {"lecture", "code"}
+        assert test_client.get("/api/sources", params={"kind": "lecture"}).json()
+        assert test_client.get("/api/sources", params={"kind": "code"}).json()
         assert test_client.get("/api/notes", params={"user_id": "seoyoung"}).json()
         assert test_client.get("/api/jobs", params={"user_id": "seoyoung"}).json()
-        assert test_client.get("/api/sources", params={"user_id": "donggyu"}).json() == []
+        assert test_client.get("/api/notes", params={"user_id": "donggyu"}).json() == []
 
 
 def test_chat_requires_gemini_key(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:

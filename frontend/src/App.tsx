@@ -14,7 +14,8 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/u/:userId" element={<DeskPage />} />
-          <Route path="/sources" element={<SourcesPage />} />
+          <Route path="/sources" element={<Navigate to="/sources/lectures" replace />} />
+          <Route path="/sources/:kind" element={<SourcesPage />} />
           <Route path="/notes" element={<NotesPage />} />
           <Route path="/notes/:noteId" element={<NoteDetailPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

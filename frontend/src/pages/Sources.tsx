@@ -1,6 +1,6 @@
 import { CalendarDays, FolderOpen, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { EmptyState, ErrorState, LoadingState } from "@/components/Status";
 import { UploadDialog } from "@/components/UploadDialog";
 import { Button } from "@/components/ui/button";
@@ -13,45 +13,57 @@ import {
   groupByTopic,
   inMonth,
   matchesQuery,
+  MATERIAL_KINDS,
+  parseMaterialKind,
   STUDY_MONTHS,
   topicTone,
 } from "@/lib/sourceBrowse";
-import { useTeamUser } from "@/lib/team";
 import { cn, formatBytes } from "@/lib/utils";
 
 const typeLabel = { pdf: "PDF", code: "코드", text: "텍스트" } as const;
 
 export function SourcesPage() {
+  const { kind: kindParam } = useParams();
+  const kind = parseMaterialKind(kindParam === "lectures" ? "lecture" : kindParam);
+  const copy = MATERIAL_KINDS[kind];
   const { sources, loading, error, refresh } = useWorkspace();
-  const { user } = useTeamUser();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [month, setMonth] = useState<(typeof STUDY_MONTHS)[number]["id"]>("all");
   const [group, setGroup] = useState<"date" | "topic">("date");
 
+  const library = useMemo(
+    () => sources.filter((source) => source.material_kind === kind),
+    [kind, sources],
+  );
+
   const topics = useMemo(
-    () => [...new Set(sources.map((source) => source.topic).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ko")),
-    [sources],
+    () => [...new Set(library.map((source) => source.topic).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ko")),
+    [library],
   );
 
   const visible = useMemo(() => {
     const prefix = STUDY_MONTHS.find((item) => item.id === month)?.prefix ?? "";
-    return sources.filter((source) => inMonth(source.date_folder, prefix) && matchesQuery(source, query));
-  }, [month, query, sources]);
+    return library.filter((source) => inMonth(source.date_folder, prefix) && matchesQuery(source, query));
+  }, [library, month, query]);
 
   const dateGroups = useMemo(() => groupByDate(visible), [visible]);
   const topicGroups = useMemo(() => groupByTopic(visible), [visible]);
+
+  if (kindParam !== "lectures" && kindParam !== "code") {
+    return <Navigate to="/sources/lectures" replace />;
+  }
 
   return (
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">소스</h1>
+          <h1 className="text-2xl font-semibold">{copy.label}</h1>
           <p className="mt-1 text-sm text-muted">
-            {user.name}의 수업 자료. 7/21–9/30 매일 다른 주제를 날짜와 주제로 찾아보세요.
+            강사님이 올려 주신 {copy.label}를 팀이 같이 봅니다. 7월부터 10월까지 날짜와 주제로 찾아보세요.
           </p>
         </div>
-        <Button onClick={() => setUploadOpen(true)}>소스 업로드</Button>
+        <Button onClick={() => setUploadOpen(true)}>{copy.uploadLabel}</Button>
       </div>
 
       <div className="mt-6 rounded-[28px] border border-[#efeaf6] bg-white p-4 shadow-sm">
@@ -62,7 +74,7 @@ export function SourcesPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="주제, 파일 이름, 날짜로 찾기"
-            aria-label="소스 검색"
+            aria-label={copy.searchLabel}
             className="h-12 rounded-2xl pl-11"
           />
         </div>
@@ -113,18 +125,18 @@ export function SourcesPage() {
       </div>
 
       <div className="mt-6">
-        {loading ? <LoadingState label="소스를 불러오는 중" /> : null}
+        {loading ? <LoadingState label={copy.loadingLabel} /> : null}
         {error ? (
-          <ErrorState message={`소스를 불러오지 못했습니다. ${error}`} onRetry={() => void refresh()} />
+          <ErrorState message={`${copy.label}를 불러오지 못했습니다. ${error}`} onRetry={() => void refresh()} />
         ) : null}
-        {!loading && !error && sources.length === 0 ? (
+        {!loading && !error && library.length === 0 ? (
           <EmptyState
-            title="아직 소스가 없습니다"
-            description="수업 날짜와 주제를 넣고 올리면 7/21부터 9/30까지 자동으로 나눠집니다."
-            action={<Button onClick={() => setUploadOpen(true)}>첫 소스 올리기</Button>}
+            title={copy.emptyTitle}
+            description={copy.emptyDescription}
+            action={<Button onClick={() => setUploadOpen(true)}>{copy.uploadLabel}</Button>}
           />
         ) : null}
-        {!loading && !error && sources.length > 0 && visible.length === 0 ? (
+        {!loading && !error && library.length > 0 && visible.length === 0 ? (
           <EmptyState title="검색 결과가 없습니다" description="다른 월이나 주제로 찾아보세요." />
         ) : null}
         {!loading && !error && visible.length > 0 && group === "date" ? (
@@ -171,6 +183,7 @@ export function SourcesPage() {
         onOpenChange={setUploadOpen}
         onUploaded={() => void refresh()}
         topics={topics}
+        materialKind={kind}
       />
     </div>
   );
@@ -194,14 +207,7 @@ function SourceRow({ source, hideTopic }: { source: SourceItem; hideTopic?: bool
           {hideTopic ? <span>{formatStudyDay(source.date_folder)}</span> : null}
         </p>
       </div>
-      <div className="flex items-center gap-3 text-sm">
-        <StatusPill status={source.status} />
-        {source.note_id ? (
-          <Link to={`/notes/${source.note_id}`} className="text-lavender hover:underline">
-            노트 보기
-          </Link>
-        ) : null}
-      </div>
+      <StatusPill status={source.status} />
     </li>
   );
 }

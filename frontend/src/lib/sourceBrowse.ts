@@ -1,11 +1,41 @@
-import type { SourceItem } from "@/lib/api";
+import type { MaterialKind, SourceItem } from "@/lib/api";
 
 export const STUDY_MONTHS = [
   { id: "all", label: "전체", prefix: "" },
   { id: "07", label: "7월", prefix: "2026-07" },
   { id: "08", label: "8월", prefix: "2026-08" },
   { id: "09", label: "9월", prefix: "2026-09" },
+  { id: "10", label: "10월", prefix: "2026-10" },
 ] as const;
+
+export const MATERIAL_KINDS = {
+  lecture: {
+    id: "lecture" as const,
+    label: "강의자료",
+    path: "/sources/lectures",
+    emptyTitle: "아직 강의자료가 없습니다",
+    emptyDescription: "강사님 슬라이드나 PDF를 올리면 팀이 같이 볼 수 있습니다.",
+    uploadLabel: "강의자료 올리기",
+    searchLabel: "강의자료 검색",
+    loadingLabel: "강의자료를 불러오는 중",
+    accept: ".pdf,.md,.txt,.ppt,.pptx",
+  },
+  code: {
+    id: "code" as const,
+    label: "코드",
+    path: "/sources/code",
+    emptyTitle: "아직 코드가 없습니다",
+    emptyDescription: "강사님이 보여 주신 코드를 올리면 팀이 같이 볼 수 있습니다.",
+    uploadLabel: "코드 올리기",
+    searchLabel: "코드 검색",
+    loadingLabel: "코드를 불러오는 중",
+    accept: ".py,.js,.ts,.tsx,.jsx,.java,.go,.rs,.c,.cpp,.ipynb,.txt",
+  },
+} as const;
+
+export function parseMaterialKind(raw: string | undefined): MaterialKind {
+  return raw === "code" ? "code" : "lecture";
+}
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 

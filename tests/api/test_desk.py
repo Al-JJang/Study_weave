@@ -67,6 +67,52 @@ def test_section_crud_and_move(client: TestClient, tmp_path: Path) -> None:
     assert deleted.json()["unfiled"][0]["id"] == note["id"]
 
 
+def test_shared_source_does_not_enter_unfiled(client: TestClient) -> None:
+    uploaded = client.post(
+        "/api/sources",
+        data={
+            "user_id": "donggyu",
+            "topic": "RAG",
+            "study_date": "10/7",
+            "material_kind": "lecture",
+        },
+        files={"file": ("week1.pdf", b"%PDF-1.4 demo", "application/pdf")},
+    )
+    assert uploaded.status_code == 201
+    desk = client.get("/api/desk", params={"user_id": "donggyu"}).json()
+    assert desk["unfiled"] == []
+
+
+def test_can_pin_shared_source_to_desk(client: TestClient) -> None:
+    source = client.post(
+        "/api/sources",
+        data={
+            "user_id": "seoyoung",
+            "topic": "LangGraph",
+            "study_date": "10/7",
+            "material_kind": "code",
+        },
+        files={"file": ("agent.py", b"print(1)\n", "text/x-python")},
+    ).json()
+    section = client.post(
+        "/api/desk/sections", json={"user_id": "donggyu", "title": "이번 주"}
+    ).json()
+    moved = client.post(
+        "/api/desk/move",
+        json={
+            "user_id": "donggyu",
+            "kind": "source",
+            "item_id": source["id"],
+            "section_id": section["sections"][0]["id"],
+        },
+    )
+    assert moved.status_code == 200
+    item = moved.json()["sections"][0]["items"][0]
+    assert item["id"] == source["id"]
+    assert item["href"] == "/sources/code"
+    assert moved.json()["unfiled"] == []
+
+
 def test_cannot_move_other_users_note(client: TestClient) -> None:
     note = client.post("/api/notes", json={"title": "서영 노트", "user_id": "seoyoung"}).json()
     section = client.post(

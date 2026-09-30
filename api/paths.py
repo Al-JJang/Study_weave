@@ -5,10 +5,26 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")
 _UNSAFE = re.compile(r"[^\w.\-가-힣]+", re.UNICODE)
+
+MaterialKind = Literal["lecture", "code"]
+CODE_SUFFIXES = {".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs", ".c", ".cpp"}
+
+
+def parse_material_kind(raw: str | None, *, filename: str) -> MaterialKind:
+    text = (raw or "").strip().lower()
+    if text == "code":
+        return "code"
+    if text == "lecture":
+        return "lecture"
+    suffix = Path(filename).suffix.lower()
+    if suffix in CODE_SUFFIXES:
+        return "code"
+    return "lecture"
 
 
 def today_folder() -> str:

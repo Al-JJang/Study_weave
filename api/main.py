@@ -3,8 +3,8 @@
 제공 엔드포인트:
     GET  /api/health
     GET  /api/users
-    GET  /api/sources?user_id=
-    POST /api/sources          파일 업로드 (user_id 폼)
+    GET  /api/sources?kind=lecture|code
+    POST /api/sources          강사 자료 업로드 (user_id, material_kind 폼)
     GET  /api/notes?user_id=
     POST /api/notes            빈 노트 생성
     GET  /api/notes/{note_id}
@@ -48,22 +48,22 @@ from api.models import (
     TeamUser,
 )
 from api.paths import (
+    CODE_SUFFIXES,
     normalize_topic,
+    parse_material_kind,
     parse_study_date,
     sanitize_filename,
     today_folder,
     topic_slug,
     unique_path,
 )
-from api.pipeline import graph_available, try_mock_markdown
+from api.pipeline import graph_available
 from api.users import list_team_users, require_user_id
 from config import DATA_DIR
 
 UPLOAD_DIR = DATA_DIR / "uploads"
 NOTES_DIR = DATA_DIR / "notes"
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
-
-CODE_SUFFIXES = {".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs", ".c", ".cpp"}
 
 
 def _now() -> str:
@@ -77,22 +77,6 @@ def _source_type(filename: str) -> SourceKind:
     if suffix in CODE_SUFFIXES:
         return "code"
     return "text"
-
-
-def _preview(markdown: str, fallback: str) -> str:
-    for line in markdown.splitlines():
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#") and not stripped.startswith("---"):
-            return stripped[:160]
-    return fallback[:160]
-
-
-def _title_from_markdown(markdown: str, fallback: str) -> str:
-    for line in markdown.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("# "):
-            return stripped[2:].strip()[:80]
-    return fallback
 
 
 def _write_note_file(user_id: str, date_folder: str, title: str, markdown: str) -> tuple[str, str]:
@@ -132,8 +116,14 @@ def create_app(*, seed: bool = True) -> FastAPI:
         return [TeamUser(**row) for row in list_team_users()]
 
     @application.get("/api/sources", response_model=list[SourceItem])
-    def list_sources(user_id: str | None = None) -> list[SourceItem]:
-        return store.list_sources(user_id=require_user_id(user_id))
+    def list_sources(kind: str | None = None) -> list[SourceItem]:
+        material = None
+        if kind is not None and kind.strip():
+            text = kind.strip().lower()
+            if text not in {"lecture", "code"}:
+                raise HTTPException(status_code=400, detail="kind는 lecture 또는 code 여야 합니다.")
+            material = text
+        return store.list_sources(material_kind=material)
 
     @application.post("/api/sources", response_model=SourceItem, status_code=201)
     async def upload_source(
@@ -141,6 +131,7 @@ def create_app(*, seed: bool = True) -> FastAPI:
         user_id: Annotated[str | None, Form()] = None,
         topic: Annotated[str | None, Form()] = None,
         study_date: Annotated[str | None, Form()] = None,
+        material_kind: Annotated[str | None, Form()] = None,
     ) -> SourceItem:
         uid = require_user_id(user_id)
         filename = (file.filename or "").strip()
@@ -160,94 +151,38 @@ def create_app(*, seed: bool = True) -> FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         topic_name = normalize_topic(topic)
         slug = topic_slug(topic_name)
+        kind = parse_material_kind(material_kind, filename=filename)
         safe_name = sanitize_filename(filename)
-        dest = unique_path(UPLOAD_DIR / uid / date_folder / slug, safe_name)
+        dest = unique_path(UPLOAD_DIR / kind / date_folder / slug, safe_name)
         dest.write_bytes(payload)
-        relative_path = f"{uid}/{date_folder}/{slug}/{dest.name}"
+        relative_path = f"{kind}/{date_folder}/{slug}/{dest.name}"
 
         created = _now()
         source = SourceItem(
             id=source_id,
             filename=dest.name,
             source_type=_source_type(dest.name),
+            material_kind=kind,
             size_bytes=len(payload),
             created_at=created,
-            status="processing",
+            status="ready",
             user_id=uid,
             date_folder=date_folder,
             relative_path=relative_path,
             topic=topic_name,
         )
         store.upsert_source(source)
-
-        job = JobItem(
-            id=f"job-{uuid.uuid4().hex[:10]}",
-            kind="upload",
-            status="running",
-            message="파일을 저장했습니다. 학습 노트를 준비합니다.",
-            source_id=source_id,
-            created_at=created,
-            user_id=uid,
+        store.upsert_job(
+            JobItem(
+                id=f"job-{uuid.uuid4().hex[:10]}",
+                kind="upload",
+                status="done",
+                message="강사 자료를 저장했습니다.",
+                source_id=source_id,
+                created_at=created,
+                user_id=uid,
+            )
         )
-        store.upsert_job(job)
-
-        markdown = try_mock_markdown()
-        if markdown:
-            title = _title_from_markdown(markdown, Path(dest.name).stem)
-            _, note_rel = _write_note_file(uid, date_folder, title, markdown)
-            note = NoteItem(
-                id=f"note-{uuid.uuid4().hex[:10]}",
-                title=title,
-                preview=_preview(markdown, title),
-                markdown=markdown,
-                source_ids=[source_id],
-                created_at=_now(),
-                status="ready",
-                user_id=uid,
-                date_folder=date_folder,
-                relative_path=note_rel,
-            )
-            source = source.model_copy(update={"status": "ready", "note_id": note.id})
-            job = job.model_copy(
-                update={
-                    "status": "done",
-                    "note_id": note.id,
-                    "message": "mock 파이프라인으로 노트를 만들었습니다.",
-                }
-            )
-            store.upsert_note(note)
-        else:
-            title = Path(dest.name).stem
-            markdown = (
-                f"# {title}\n\n"
-                "업로드는 완료됐습니다. 분석 그래프가 연결되면 이 자리에 "
-                "개념·코드·퀴즈 노트가 채워집니다.\n"
-            )
-            _, note_rel = _write_note_file(uid, date_folder, title, markdown)
-            note = NoteItem(
-                id=f"note-{uuid.uuid4().hex[:10]}",
-                title=title,
-                preview="그래프가 아직 없어 placeholder 노트를 만들었습니다.",
-                markdown=markdown,
-                source_ids=[source_id],
-                created_at=_now(),
-                status="draft",
-                user_id=uid,
-                date_folder=date_folder,
-                relative_path=note_rel,
-            )
-            source = source.model_copy(update={"status": "ready", "note_id": note.id})
-            job = job.model_copy(
-                update={
-                    "status": "done",
-                    "note_id": note.id,
-                    "message": "그래프가 없어 placeholder 노트를 만들었습니다.",
-                }
-            )
-            store.upsert_note(note)
-
-        store.upsert_source(source)
-        store.upsert_job(job)
         return source
 
     @application.get("/api/notes", response_model=list[NoteItem])
@@ -259,15 +194,12 @@ def create_app(*, seed: bool = True) -> FastAPI:
         uid = require_user_id(body.user_id if body else None)
         title = (body.title if body and body.title else "새 노트").strip() or "새 노트"
         date_folder = today_folder()
-        markdown = (
-            f"# {title}\n\n"
-            "빈 노트입니다. 대시보드에서 소스를 업로드하면 분석 결과가 이 형식으로 쌓입니다.\n"
-        )
+        markdown = f"# {title}\n\n빈 노트입니다. 개인 작업 공간에서 수업 내용을 정리하세요.\n"
         _, note_rel = _write_note_file(uid, date_folder, title, markdown)
         note = NoteItem(
             id=f"note-{uuid.uuid4().hex[:10]}",
             title=title,
-            preview="아직 본문이 없습니다. 소스를 올리면 학습 노트가 채워집니다.",
+            preview="아직 본문이 없습니다. 수업 내용을 여기에 정리하세요.",
             markdown=markdown,
             source_ids=[],
             created_at=_now(),

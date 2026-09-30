@@ -64,10 +64,10 @@ export function DeskPage() {
       {
         id: UNFILED_ID,
         title: "아직 안 나눔",
-        description: "섹션에 넣지 않은 노트와 업로드입니다.",
+        description: "섹션에 넣지 않은 노트입니다.",
         items: desk.unfiled,
-        emptyTitle: "아직 넣을 자료가 없습니다",
-        emptyDescription: "대시보드에서 소스를 올리거나 노트를 만들면 여기에 나타납니다.",
+        emptyTitle: "아직 넣을 노트가 없습니다",
+        emptyDescription: "대시보드에서 노트를 만들면 여기에 나타납니다.",
       },
       ...desk.sections.map((section) => ({
         id: section.id,
@@ -134,7 +134,7 @@ export function DeskPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="text-2xl font-semibold">{user.name}의 작업 공간</h1>
-      <p className="mt-1 text-sm text-muted">섹션을 탭이나 접기로 보고, 노트와 업로드를 나눠 두세요.</p>
+      <p className="mt-1 text-sm text-muted">섹션을 탭이나 접기로 보고, 개인 노트를 나눠 두세요.</p>
 
       <div className="mt-6 rounded-[28px] border border-[#efeaf6] bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -460,7 +460,7 @@ function PaneBody({
             >
               <div>
                 <Link to={item.href} className="font-medium hover:text-lavender">
-                  {item.kind === "note" ? "노트" : "소스"} · {item.title}
+                  {item.kind === "note" ? "노트" : item.href.includes("/code") ? "코드" : "강의자료"} · {item.title}
                 </Link>
                 {item.preview ? <p className="mt-1 line-clamp-2 text-xs text-muted">{item.preview}</p> : null}
               </div>

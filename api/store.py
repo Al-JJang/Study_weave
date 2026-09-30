@@ -22,19 +22,32 @@ def reset(*, seed: bool = False) -> None:
 
 
 def seed_demo() -> None:
-    """팀이 첫 화면을 볼 수 있게 mock 소스/노트 한 건씩 넣는다."""
-    source = SourceItem(
+    """팀이 첫 화면을 볼 수 있게 공유 강의자료·코드와 개인 노트 샘플을 넣는다."""
+    lecture = SourceItem(
         id="src-demo-pdf",
         filename="langgraph_agent_guide.pdf",
         source_type="pdf",
+        material_kind="lecture",
         size_bytes=248_832,
         created_at="2026-09-28T09:00:00+00:00",
         status="ready",
         user_id="seoyoung",
         date_folder="2026-09-28",
-        relative_path="seoyoung/2026-09-28/LangGraph/langgraph_agent_guide.pdf",
+        relative_path="lecture/2026-09-28/LangGraph/langgraph_agent_guide.pdf",
         topic="LangGraph",
-        note_id="note-demo-001",
+    )
+    code = SourceItem(
+        id="src-demo-code",
+        filename="agent_loop.py",
+        source_type="code",
+        material_kind="code",
+        size_bytes=1_024,
+        created_at="2026-10-07T09:00:00+00:00",
+        status="ready",
+        user_id="donggyu",
+        date_folder="2026-10-07",
+        relative_path="code/2026-10-07/LangGraph/agent_loop.py",
+        topic="LangGraph",
     )
     note = NoteItem(
         id="note-demo-001",
@@ -47,7 +60,7 @@ def seed_demo() -> None:
             "- `@tool` 데코레이터는 일반 함수를 LLM이 호출 가능한 Tool로 바꿉니다.\n"
             "- Agent Loop는 agent와 tools를 순환시켜 Tool 결과를 다시 판단에 넣습니다.\n\n"
             "## 다음에 할 일\n"
-            "소스를 업로드하면 같은 형식으로 노트가 추가됩니다.\n"
+            "강사님 자료는 자료함에서 보고, 개인 노트는 여기서 정리합니다.\n"
         ),
         source_ids=["src-demo-pdf"],
         created_at="2026-09-28T09:05:00+00:00",
@@ -60,21 +73,23 @@ def seed_demo() -> None:
         id="job-demo-001",
         kind="upload",
         status="done",
-        message="샘플 소스로 노트를 만들었습니다.",
-        source_id=source.id,
-        note_id=note.id,
+        message="강사 자료를 저장했습니다.",
+        source_id=lecture.id,
         created_at="2026-09-28T09:05:00+00:00",
         user_id="seoyoung",
     )
     with _lock:
-        _sources[source.id] = source
+        _sources[lecture.id] = lecture
+        _sources[code.id] = code
         _notes[note.id] = note
         _jobs[job.id] = job
 
 
-def list_sources(*, user_id: str) -> list[SourceItem]:
+def list_sources(*, material_kind: str | None = None) -> list[SourceItem]:
     with _lock:
-        items = [item for item in _sources.values() if item.user_id == user_id]
+        items = list(_sources.values())
+        if material_kind:
+            items = [item for item in items if item.material_kind == material_kind]
         return sorted(
             items, key=lambda item: (item.date_folder, item.topic, item.filename), reverse=True
         )

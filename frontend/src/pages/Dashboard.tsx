@@ -46,19 +46,19 @@ export function DashboardPage() {
         StudyWeave AI
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
-        올린 수업 자료로 노트와 퀴즈를 만들고 검색합니다.
+        강사님 자료는 팀이 같이 보고, 노트와 퀴즈는 각자 정리합니다.
       </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         <ActionCard
-          title="소스 업로드"
-          description="PDF, 코드, 텍스트에서 학습 노트를 만드세요."
+          title="강의자료 올리기"
+          description="강사님 슬라이드와 PDF를 팀 자료함에 올립니다."
           onClick={() => setUploadOpen(true)}
           illustration={<UploadArt />}
         />
         <ActionCard
           title="새 노트 생성"
-          description="빈 노트를 만들고 나중에 소스를 연결하세요."
+          description="개인 노트를 만들고 작업 공간에서 정리하세요."
           onClick={() => void createNote()}
           disabled={creating}
           illustration={<NoteArt />}
@@ -112,7 +112,10 @@ export function DashboardPage() {
       <section className="mt-10">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold">최근 노트</h2>
-          <span className="text-xs text-muted">소스 {sources.length}개 · 노트 {notes.length}개</span>
+          <span className="text-xs text-muted">
+            강의자료 {sources.filter((source) => source.material_kind === "lecture").length}개 · 코드{" "}
+            {sources.filter((source) => source.material_kind === "code").length}개 · 내 노트 {notes.length}개
+          </span>
         </div>
         {loading ? <LoadingState label="노트를 불러오는 중" /> : null}
         {error ? <ErrorState message={`목록을 불러오지 못했습니다. ${error}`} onRetry={() => void refresh()} /> : null}
@@ -122,12 +125,12 @@ export function DashboardPage() {
             description={
               query
                 ? "다른 단어로 검색하거나 새 노트를 만들어 보세요."
-                : "소스를 올리거나 빈 노트를 만들면 여기에 나타납니다."
+                : "새 노트를 만들면 여기에 나타납니다."
             }
             action={
-              <Button onClick={() => setUploadOpen(true)}>
-                <FileUp className="h-4 w-4" />
-                소스 업로드
+              <Button onClick={() => void createNote()}>
+                <NotebookPen className="h-4 w-4" />
+                새 노트 생성
               </Button>
             }
           />
@@ -155,9 +158,10 @@ export function DashboardPage() {
         onOpenChange={setUploadOpen}
         onUploaded={(source) => {
           void refresh();
-          if (source.note_id) navigate(`/notes/${source.note_id}`);
+          navigate(source.material_kind === "code" ? "/sources/code" : "/sources/lectures");
         }}
         topics={[...new Set(sources.map((source) => source.topic).filter(Boolean))]}
+        materialKind="lecture"
       />
     </div>
   );

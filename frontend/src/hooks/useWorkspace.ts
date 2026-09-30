@@ -17,7 +17,7 @@ export function useWorkspace() {
     setLoading(true);
     setError(null);
     try {
-      const [notes, sources] = await Promise.all([api.notes(userId), api.sources(userId)]);
+      const [notes, sources] = await Promise.all([api.notes(userId), api.sources()]);
       setData({ notes, sources });
     } catch (err) {
       setError(err instanceof Error ? err.message : "서버에 연결하지 못했습니다.");

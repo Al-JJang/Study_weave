@@ -1,4 +1,4 @@
-import { FileUp, LayoutDashboard, Menu, X } from "lucide-react";
+import { BookOpen, Code2, LayoutDashboard, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "대시보드", icon: LayoutDashboard, end: true },
-  { to: "/sources", label: "소스", icon: FileUp, end: false },
+  { to: "/sources/lectures", label: "강의자료", icon: BookOpen, end: true },
+  { to: "/sources/code", label: "코드", icon: Code2, end: true },
 ];
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
